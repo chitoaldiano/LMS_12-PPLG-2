@@ -65,6 +65,8 @@ export default function SiswaDashboard() {
   const [pengumuman, setPengumuman] = useState([]);
   const [links, setLinks] = useState({});
   const [pesan, setPesan] = useState({});
+  const [mode, setMode] = useState({}); // per tugas id: "link" atau "pdf"
+  const [fileTerpilih, setFileTerpilih] = useState({}); // per tugas id: { dataUrl, namaFile }
 
   useEffect(() => {
     const s = localStorage.getItem("lms_user");
@@ -89,17 +91,49 @@ export default function SiswaDashboard() {
     setLoading(false);
   }
 
+  function pilihFile(t, e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setPesan({ ...pesan, [t._id]: "File harus berformat PDF" });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setPesan({ ...pesan, [t._id]: "Ukuran PDF maksimal 10MB" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFileTerpilih({ ...fileTerpilih, [t._id]: { dataUrl: reader.result, namaFile: file.name } });
+      setPesan({ ...pesan, [t._id]: "" });
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function kumpul(t) {
-    const fileUrl = (links[t._id] || "").trim();
-    if (!fileUrl) return setPesan({ ...pesan, [t._id]: "Isi link tugas dulu" });
+    const modeAktif = mode[t._id] || "link";
+    let payload;
+
+    if (modeAktif === "pdf") {
+      const dipilih = fileTerpilih[t._id];
+      if (!dipilih) return setPesan({ ...pesan, [t._id]: "Pilih file PDF dulu" });
+      payload = { siswaId: user._id, fileUrl: dipilih.dataUrl, namaFile: dipilih.namaFile, tipe: "pdf" };
+    } else {
+      const fileUrl = (links[t._id] || "").trim();
+      if (!fileUrl) return setPesan({ ...pesan, [t._id]: "Isi link tugas dulu" });
+      payload = { siswaId: user._id, fileUrl, tipe: "link" };
+    }
+
     const r = await fetch(`/api/tugas/${t._id}/kumpul`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ siswaId: user._id, fileUrl }),
+      body: JSON.stringify(payload),
     }).then((x) => x.json());
+
     setPesan({ ...pesan, [t._id]: r.success ? "Tugas berhasil dikumpulkan" : r.message });
     if (r.success) {
       setLinks({ ...links, [t._id]: "" });
+      setFileTerpilih({ ...fileTerpilih, [t._id]: null });
       muat(user);
     }
   }
@@ -217,16 +251,54 @@ export default function SiswaDashboard() {
                   {t.pengumpulan?.nilai != null && (
                     <p className="text-sm text-[#0F1B33] mt-2">Nilai: <strong>{t.pengumpulan.nilai}</strong></p>
                   )}
-                  <div className="flex gap-2 mt-3">
-                    <input
-                      placeholder="Tempel link tugas (Google Drive, dll)"
-                      value={links[t._id] || ""}
-                      onChange={(e) => setLinks({ ...links, [t._id]: e.target.value })}
-                      className="flex-1 px-3 py-2 rounded-lg border border-[#D8D3C8] text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]"
-                    />
-                    <button onClick={() => kumpul(t)} className="px-4 py-2 rounded-lg bg-[#0F1B33] text-white text-sm font-medium hover:bg-[#C6992F] hover:text-[#0F1B33] transition">
-                      {t.pengumpulan ? "Kirim ulang" : "Kumpulkan"}
-                    </button>
+
+                  {t.pengumpulan && (
+                    <p className="text-xs text-[#6B7280] mt-2">
+                      Terkumpul:{" "}
+                      <a href={t.pengumpulan.fileUrl} target="_blank" rel="noreferrer" className="text-[#0F1B33] font-medium underline">
+                        {t.pengumpulan.tipe === "pdf" ? t.pengumpulan.namaFile || "Lihat PDF" : "Lihat link"}
+                      </a>
+                    </p>
+                  )}
+
+                  <div className="mt-3">
+                    <div className="flex gap-1 mb-2">
+                      <button
+                        onClick={() => setMode({ ...mode, [t._id]: "link" })}
+                        className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                          (mode[t._id] || "link") === "link" ? "bg-[#0F1B33] text-white" : "bg-[#F5F3EE] text-[#6B7280]"
+                        }`}
+                      >
+                        Link
+                      </button>
+                      <button
+                        onClick={() => setMode({ ...mode, [t._id]: "pdf" })}
+                        className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                          mode[t._id] === "pdf" ? "bg-[#0F1B33] text-white" : "bg-[#F5F3EE] text-[#6B7280]"
+                        }`}
+                      >
+                        Upload PDF
+                      </button>
+                    </div>
+
+                    <div className="flex gap-2 flex-wrap">
+                      {(mode[t._id] || "link") === "link" ? (
+                        <input
+                          placeholder="Tempel link tugas (Google Drive, dll)"
+                          value={links[t._id] || ""}
+                          onChange={(e) => setLinks({ ...links, [t._id]: e.target.value })}
+                          className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-[#D8D3C8] text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]"
+                        />
+                      ) : (
+                        <label className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-dashed border-[#D8D3C8] text-sm text-[#6B7280] cursor-pointer hover:bg-[#F5F3EE] transition">
+                          {fileTerpilih[t._id]?.namaFile || "Pilih file PDF (maks 10MB)"}
+                          <input type="file" accept="application/pdf" onChange={(e) => pilihFile(t, e)} className="hidden" />
+                        </label>
+                      )}
+                      <button onClick={() => kumpul(t)} className="px-4 py-2 rounded-lg bg-[#0F1B33] text-white text-sm font-medium hover:bg-[#C6992F] hover:text-[#0F1B33] transition">
+                        {t.pengumpulan ? "Kirim ulang" : "Kumpulkan"}
+                      </button>
+                    </div>
                   </div>
                   {pesan[t._id] && <p className="text-xs text-[#6B7280] mt-2">{pesan[t._id]}</p>}
                 </div>

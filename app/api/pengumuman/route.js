@@ -36,7 +36,7 @@ export async function POST(request) {
 
     if (!judul || !isi) {
       return Response.json(
-        { success: false, message: "Judul dan isi pengumuman wajib diisi" },
+        { success: false, message: "Judul dan isi pengumuman wajib diisi" c},
         { status: 400 }
       );
     }
