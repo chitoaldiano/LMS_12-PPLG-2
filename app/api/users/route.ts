@@ -1,4 +1,4 @@
-// app/api/users/route.js
+// app/api/users/route.ts
 // Ambil daftar semua user, bisa difilter per role
 // Akses: GET /api/users
 //        GET /api/users?role=guru
@@ -7,7 +7,7 @@
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     await connectDB();
 
@@ -15,7 +15,7 @@ export async function GET(request) {
     const role = searchParams.get("role");
     const kelas = searchParams.get("kelas");
 
-    const filter = {};
+    const filter: any = {};
     if (role) filter.role = role;
     if (kelas) filter.kelas = kelas;
 
@@ -25,7 +25,7 @@ export async function GET(request) {
       .sort({ createdAt: -1 });
 
     return Response.json({ success: true, data: daftarUser });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },

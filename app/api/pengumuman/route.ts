@@ -1,4 +1,4 @@
-// app/api/pengumuman/route.js
+// app/api/pengumuman/route.ts
 // Akses: GET  /api/pengumuman                -> semua pengumuman
 //        GET  /api/pengumuman?target=siswa   -> pengumuman untuk siswa (termasuk yang untuk "semua")
 //        POST /api/pengumuman                -> buat pengumuman baru
@@ -6,7 +6,7 @@
 import connectDB from "@/lib/mongodb";
 import Pengumuman from "@/models/Pengumuman";
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     await connectDB();
 
@@ -18,7 +18,7 @@ export async function GET(request) {
     const daftar = await Pengumuman.find(filter).sort({ createdAt: -1 });
 
     return Response.json({ success: true, data: daftar });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },
@@ -27,7 +27,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     await connectDB();
 
@@ -36,7 +36,7 @@ export async function POST(request) {
 
     if (!judul || !isi) {
       return Response.json(
-        { success: false, message: "Judul dan isi pengumuman wajib diisi" c},
+        { success: false, message: "Judul dan isi pengumuman wajib diisi" },
         { status: 400 }
       );
     }
@@ -44,7 +44,7 @@ export async function POST(request) {
     const baru = await Pengumuman.create({ judul, isi, target, prioritas, pembuat });
 
     return Response.json({ success: true, data: baru }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },

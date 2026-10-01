@@ -1,4 +1,4 @@
-// app/api/users/login/route.js
+// app/api/users/login/route.ts
 // Buat login user yang udah terdaftar
 // Akses: POST /api/users/login
 
@@ -6,7 +6,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     await connectDB();
 
@@ -41,14 +41,14 @@ export async function POST(request) {
     }
 
     // Login berhasil - jangan kirim balik password
-    const userTanpaPassword = user.toObject();
+    const userTanpaPassword: any = user.toObject();
     delete userTanpaPassword.password;
 
     return Response.json(
       { success: true, data: userTanpaPassword },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },

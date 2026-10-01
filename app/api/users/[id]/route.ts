@@ -1,4 +1,4 @@
-// app/api/users/[id]/route.js
+// app/api/users/[id]/route.ts
 // Akses: DELETE /api/users/ID_USER  -> hapus user
 //        PUT    /api/users/ID_USER  -> edit user
 
@@ -6,7 +6,9 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-export async function DELETE(request, { params }) {
+type Params = { params: Promise<{ id: string }> };
+
+export async function DELETE(request: Request, { params }: Params) {
   try {
     await connectDB();
     const { id } = await params;
@@ -21,7 +23,7 @@ export async function DELETE(request, { params }) {
     }
 
     return Response.json({ success: true, message: "User berhasil dihapus" });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },
@@ -30,13 +32,13 @@ export async function DELETE(request, { params }) {
   }
 }
 
-export async function PUT(request, { params }) {
+export async function PUT(request: Request, { params }: Params) {
   try {
     await connectDB();
     const { id } = await params;
     const body = await request.json();
 
-    const dataUpdate = { ...body };
+    const dataUpdate: any = { ...body };
 
     // Kalau ada password baru dikirim, hash dulu. Kalau kosong, jangan diubah.
     if (dataUpdate.password) {
@@ -59,7 +61,7 @@ export async function PUT(request, { params }) {
     }
 
     return Response.json({ success: true, data: userUpdate });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },

@@ -1,9 +1,18 @@
-// models/Materi.js
+// models/Materi.ts
 // Fitur: Guru upload materi (pdf & link), siswa/guru/dst bisa download & preview
 
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-const MateriSchema = new mongoose.Schema(
+export interface IMateri extends Document {
+  judul: string;
+  mataPelajaran: string;
+  kelas: string;
+  tipe: "pdf" | "link";
+  fileUrl: string;
+  guru: Types.ObjectId;
+}
+
+const MateriSchema = new Schema<IMateri>(
   {
     judul: {
       type: String,
@@ -27,7 +36,7 @@ const MateriSchema = new mongoose.Schema(
       required: true,
     },
     guru: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User", // relasi ke guru yang upload
       required: true,
     },
@@ -35,4 +44,4 @@ const MateriSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Materi || mongoose.model("Materi", MateriSchema);
+export default (mongoose.models.Materi as Model<IMateri>) || mongoose.model<IMateri>("Materi", MateriSchema);

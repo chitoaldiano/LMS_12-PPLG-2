@@ -1,4 +1,4 @@
-// app/api/users/register/route.js
+// app/api/users/register/route.ts
 // Buat daftar user baru (siswa, guru, admin, kepsek, kurikulum)
 // Akses: POST /api/users/register
 
@@ -6,7 +6,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     await connectDB();
 
@@ -65,14 +65,14 @@ export async function POST(request) {
       foto,
     });
 
-    const userTanpaPassword = userBaru.toObject();
+    const userTanpaPassword: any = userBaru.toObject();
     delete userTanpaPassword.password;
 
     return Response.json(
       { success: true, data: userTanpaPassword },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },

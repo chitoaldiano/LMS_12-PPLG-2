@@ -1,18 +1,28 @@
-// models/Nilai.js
+// models/Nilai.ts
 // Fitur: Asesmen (kuis, ujian online, penilaian) + Rekap nilai per mapel/kelas/jurusan
 // Ini yang dipakai role Kurikulum buat "download nilai per mapel per guru"
 
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-const NilaiSchema = new mongoose.Schema(
+export interface INilai extends Document {
+  siswa: Types.ObjectId;
+  guru: Types.ObjectId;
+  mataPelajaran: string;
+  kelas: string;
+  jurusan?: string;
+  jenis: "kuis" | "ujian_online" | "tugas" | "penilaian_manual";
+  nilai: number;
+}
+
+const NilaiSchema = new Schema<INilai>(
   {
     siswa: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     guru: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -42,4 +52,4 @@ const NilaiSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Nilai || mongoose.model("Nilai", NilaiSchema);
+export default (mongoose.models.Nilai as Model<INilai>) || mongoose.model<INilai>("Nilai", NilaiSchema);

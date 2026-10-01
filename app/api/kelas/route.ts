@@ -1,4 +1,4 @@
-// app/api/kelas/route.js
+// app/api/kelas/route.ts
 // Akses: GET  /api/kelas  -> daftar semua kelas
 //        POST /api/kelas  -> tambah kelas baru
 
@@ -15,7 +15,7 @@ export async function GET() {
       .sort({ tingkat: 1, namaKelas: 1 });
 
     return Response.json({ success: true, data: daftarKelas });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },
@@ -24,7 +24,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
     await connectDB();
 
@@ -46,13 +46,13 @@ export async function POST(request) {
       );
     }
 
-    const dataBaru = { namaKelas, tingkat, jurusan };
+    const dataBaru: any = { namaKelas, tingkat, jurusan };
     if (waliKelas) dataBaru.waliKelas = waliKelas;
 
     const kelasBaru = await Kelas.create(dataBaru);
 
     return Response.json({ success: true, data: kelasBaru }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return Response.json(
       { success: false, message: error.message },

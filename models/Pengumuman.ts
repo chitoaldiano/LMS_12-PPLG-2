@@ -1,9 +1,17 @@
-// models/Pengumuman.js
+// models/Pengumuman.ts
 // Pengumuman dari admin, bisa ditargetkan ke semua orang, guru saja, atau siswa saja
 
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 
-const PengumumanSchema = new mongoose.Schema(
+export interface IPengumuman extends Document {
+  judul: string;
+  isi: string;
+  target: "semua" | "guru" | "siswa";
+  prioritas: "biasa" | "penting";
+  pembuat?: string;
+}
+
+const PengumumanSchema = new Schema<IPengumuman>(
   {
     judul: {
       type: String,
@@ -31,4 +39,4 @@ const PengumumanSchema = new mongoose.Schema(
   { timestamps: true, collection: "pengumuman" }
 );
 
-export default mongoose.models.Pengumuman || mongoose.model("Pengumuman", PengumumanSchema);
+export default (mongoose.models.Pengumuman as Model<IPengumuman>) || mongoose.model<IPengumuman>("Pengumuman", PengumumanSchema);

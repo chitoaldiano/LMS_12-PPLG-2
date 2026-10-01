@@ -1,8 +1,11 @@
+// app/api/tugas/[id]/kumpul/route.ts
 // POST /api/tugas/ID/kumpul  body: { siswaId, fileUrl, namaFile?, tipe? }
 import connectDB from "@/lib/mongodb";
 import Tugas from "@/models/Tugas";
 
-export async function POST(request, { params }) {
+type Params = { params: Promise<{ id: string }> };
+
+export async function POST(request: Request, { params }: Params) {
   try {
     await connectDB();
     const { id } = await params;
@@ -19,18 +22,18 @@ export async function POST(request, { params }) {
       namaFile: namaFile || null,
       tipe: tipe === "pdf" ? "pdf" : "link",
     };
-    const ada = tugas.submissions.find((s) => String(s.siswa) === siswaId);
+    const ada = tugas.submissions.find((s: any) => String(s.siswa) === siswaId);
     if (ada) {
       ada.fileUrl = data.fileUrl;
       ada.namaFile = data.namaFile;
-      ada.tipe = data.tipe;
+      ada.tipe = data.tipe as "link" | "pdf";
       ada.waktuKumpul = new Date();
     } else {
-      tugas.submissions.push({ siswa: siswaId, ...data });
+      tugas.submissions.push({ siswa: siswaId, ...data } as any);
     }
     await tugas.save();
     return Response.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     return Response.json({ success: false, message: error.message }, { status: 400 });
   }
 }

@@ -1,9 +1,18 @@
-// models/Kelas.js
+// models/Kelas.ts
 // Data kelas: misal "X PPLG 1" -> tingkat X, jurusan PPLG, rombel 1
 
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-const KelasSchema = new mongoose.Schema(
+export interface IKelas extends Document {
+  namaKelas: string;
+  tingkat: "X" | "XI" | "XII";
+  jurusan: string;
+  tahunAjaran?: string;
+  kapasitas?: number;
+  waliKelas?: Types.ObjectId;
+}
+
+const KelasSchema = new Schema<IKelas>(
   {
     namaKelas: {
       type: String,
@@ -29,7 +38,7 @@ const KelasSchema = new mongoose.Schema(
       required: false,
     },
     waliKelas: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: false,
     },
@@ -37,4 +46,4 @@ const KelasSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Kelas || mongoose.model("Kelas", KelasSchema);
+export default (mongoose.models.Kelas as Model<IKelas>) || mongoose.model<IKelas>("Kelas", KelasSchema);

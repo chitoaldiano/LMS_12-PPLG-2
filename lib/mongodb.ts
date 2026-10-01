@@ -1,4 +1,4 @@
-// lib/mongodb.js
+// lib/mongodb.ts
 // Koneksi MongoDB pakai Mongoose, khusus untuk Next.js App Router.
 //
 // KENAPA HARUS PAKAI POLA SEPERTI INI?
@@ -9,12 +9,22 @@
 
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
   throw new Error(
     "Tolong isi MONGODB_URI di file .env.local. Contoh: mongodb://127.0.0.1:27017/lms_db"
   );
+}
+
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongooseCache: MongooseCache | undefined;
 }
 
 // Simpan koneksi di variabel global (khusus development, App Router sering reload)
@@ -26,29 +36,29 @@ if (!cached) {
 
 async function connectDB() {
   // Kalau sudah pernah connect, pakai koneksi yang sama (jangan connect lagi)
-  if (cached.conn) {
-    return cached.conn;
+  if (cached!.conn) {
+    return cached!.conn;
   }
 
-  if (!cached.promise) {
+  if (!cached!.promise) {
     const opts = {
       bufferCommands: false, // biar error langsung ketauan, bukan nunggu timeout
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
       console.log("✅ MongoDB terkoneksi:", MONGODB_URI);
-      return mongoose;
+      return mongooseInstance;
     });
   }
 
   try {
-    cached.conn = await cached.promise;
+    cached!.conn = await cached!.promise;
   } catch (e) {
-    cached.promise = null; // reset supaya bisa coba connect lagi kalau gagal
+    cached!.promise = null; // reset supaya bisa coba connect lagi kalau gagal
     throw e;
   }
 
-  return cached.conn;
+  return cached!.conn;
 }
 
 export default connectDB;
