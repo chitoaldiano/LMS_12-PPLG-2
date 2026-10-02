@@ -1,10 +1,25 @@
 // app/api/users/register/route.ts
 // Buat daftar user baru (siswa, guru, admin, kepsek, kurikulum)
 // Akses: POST /api/users/register
+//
+// PENTING: login per role beda-beda sekarang:
+//   admin     -> username
+//   siswa     -> nisn
+//   kepsek    -> nip
+//   guru      -> email
+//   kurikulum -> email
 
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+
+const LABEL_LOGIN: Record<string, string> = {
+  admin: "Username",
+  siswa: "NISN",
+  kepsek: "NIP",
+  guru: "Email",
+  kurikulum: "Email",
+};
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +30,7 @@ export async function POST(request: Request) {
       nama,
       username,
       email,
+      nisn,
       password,
       role,
       kelas,
@@ -29,17 +45,41 @@ export async function POST(request: Request) {
       foto,
     } = body;
 
-    if (!nama || !username || !password || !role) {
+    if (!nama || !password || !role) {
       return Response.json(
-        { success: false, message: "Nama, username, password, dan role wajib diisi" },
+        { success: false, message: "Nama, password, dan role wajib diisi" },
         { status: 400 }
       );
     }
 
-    const userSudahAda = await User.findOne({ username: username.toLowerCase() });
+    // Tentukan field login mana yang wajib dicek, sesuai role
+    let dupField = "";
+    let dupValue = "";
+    if (role === "admin") {
+      dupField = "username";
+      dupValue = (username || "").toLowerCase();
+    } else if (role === "siswa") {
+      dupField = "nisn";
+      dupValue = nisn || "";
+    } else if (role === "kepsek") {
+      dupField = "nip";
+      dupValue = nip || "";
+    } else if (role === "guru" || role === "kurikulum") {
+      dupField = "email";
+      dupValue = (email || "").toLowerCase();
+    }
+
+    if (!dupValue) {
+      return Response.json(
+        { success: false, message: `${LABEL_LOGIN[role] || "Login"} wajib diisi untuk role ini` },
+        { status: 400 }
+      );
+    }
+
+    const userSudahAda = await User.findOne({ [dupField]: dupValue });
     if (userSudahAda) {
       return Response.json(
-        { success: false, message: "Username sudah dipakai, coba username lain" },
+        { success: false, message: `${LABEL_LOGIN[role]} sudah dipakai, coba yang lain` },
         { status: 409 }
       );
     }
@@ -47,23 +87,28 @@ export async function POST(request: Request) {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const userBaru = await User.create({
+    // Cuma masukin field login yang relevan biar nggak nyimpen string kosong
+    // (string kosong bisa bentrok sama unique index kalau ada user lain yang juga kosong)
+    const dataBaru: any = {
       nama,
-      username,
-      email,
       password: passwordHash,
       role,
       kelas,
       jurusan,
       mataPelajaran,
       nis,
-      nip,
       noTelepon,
       jenisKelamin,
       alamat,
       status,
       foto,
-    });
+    };
+    if (username) dataBaru.username = username.toLowerCase();
+    if (email) dataBaru.email = email.toLowerCase();
+    if (nisn) dataBaru.nisn = nisn;
+    if (nip) dataBaru.nip = nip;
+
+    const userBaru = await User.create(dataBaru);
 
     const userTanpaPassword: any = userBaru.toObject();
     delete userTanpaPassword.password;

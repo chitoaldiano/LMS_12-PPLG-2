@@ -56,32 +56,30 @@ const FITUR = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#FAF8F3] text-[#0F1B33] overflow-hidden">
+    <main className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#F5FAF7_0%,#F5FAF7_58%,#EDF5EF_100%)] text-[#173D38]">
 
       {/* ================= HEADER ================= */}
-      <header className="relative z-20 px-6 sm:px-8 md:px-16 py-6 md:py-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="relative z-20 px-5 py-5 sm:px-8 md:px-14 md:py-7">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
 
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-[#C6992F]/20 rounded-full blur-md" />
-
+            <div className="rounded-full bg-white p-1 shadow-[0_5px_18px_rgba(23,61,56,0.10)]">
               <Image
                 src="/logo.png"
                 alt="Logo SMK Citra Negara"
                 width={56}
                 height={56}
                 priority
-                className="relative rounded-full bg-white shadow-sm"
+                className="rounded-full"
               />
             </div>
 
             <div>
-              <p className="font-bold text-[#0F1B33] text-base md:text-lg leading-tight">
+              <p className="text-base font-bold leading-tight text-[#173D38] md:text-lg">
                 SMK Citra Negara
               </p>
 
-              <p className="text-[11px] md:text-xs text-[#9CA3AF] mt-1">
+              <p className="mt-1 text-[11px] text-[#71827C] md:text-xs">
                 Learning Management System
               </p>
             </div>
@@ -89,19 +87,7 @@ export default function Home() {
 
           <Link
             href="/login"
-            className="
-              hidden sm:inline-flex
-              items-center justify-center
-              px-5 py-2.5
-              rounded-xl
-              border border-[#0F1B33]
-              text-[#0F1B33]
-              text-sm font-semibold
-              transition-all duration-300
-              hover:bg-[#0F1B33]
-              hover:text-white
-              hover:-translate-y-0.5
-            "
+            className="inline-flex items-center justify-center rounded-full border border-[#B8CEC5] px-4 py-2 text-sm font-semibold text-[#173D38] transition-colors hover:border-[#173D38] hover:bg-[#173D38] hover:text-white sm:px-5 sm:py-2.5"
           >
             Masuk
           </Link>
@@ -142,62 +128,60 @@ export default function Home() {
       />
 
       {/* ================= HERO ================= */}
-      <section className="relative z-10 px-6 sm:px-8 md:px-16 pt-10 pb-20 md:pt-16 md:pb-28">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative z-10 px-5 pb-16 pt-10 sm:px-8 md:px-14 md:pb-24 md:pt-14">
+        <div className="mx-auto max-w-7xl">
 
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+          <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-14">
 
             {/* HERO TEXT */}
-            <div className="w-full lg:w-[52%] max-w-2xl">
+            <div className="w-full max-w-2xl lg:w-[52%]">
 
               <span
                 className="
                   inline-flex items-center
                   px-4 py-2
                   rounded-full
-                  bg-[#C6992F]/10
-                  border border-[#C6992F]/20
-                  text-[#8B6F3E]
+                  gap-2
+                  bg-[#E4F2EC]
+                  border border-[#CEE4D9]
+                  text-[#39745F]
                   text-xs
                   font-bold
-                  tracking-[0.12em]
+                  tracking-[0.08em]
                   mb-6
                 "
               >
+                <span className="h-2 w-2 rounded-full bg-[#E28A5B]" />
                 PLATFORM BELAJAR DIGITAL
               </span>
 
               <h1
                 className="
-                  text-4xl
+                  text-[2.65rem]
                   sm:text-5xl
-                  lg:text-[58px]
+                  lg:text-[3.7rem]
                   font-bold
-                  text-[#0F1B33]
-                  leading-[1.08]
-                  tracking-[-0.025em]
+                  text-[#173D38]
+                  leading-[1.12]
                   mb-6
                 "
               >
-                Learning Management System{" "}
-                <span className="text-[#C6992F]">
-                  SMK Citra Negara
-                </span>
+                Belajar lebih terarah, bersama{" "}
+                <span className="text-[#D8784B]">SMK Citra Negara</span>
               </h1>
 
               <p
                 className="
                   text-base
                   md:text-lg
-                  text-[#6B7280]
+                  text-[#63766F]
                   leading-8
                   max-w-xl
                   mb-9
                 "
               >
-                Satu platform digital untuk mendukung proses pembelajaran,
-                kolaborasi, dan pengelolaan akademik bagi seluruh warga
-                sekolah.
+                Satu ruang digital untuk mengakses materi, mengerjakan tugas,
+                dan mengikuti perkembangan belajar dengan lebih mudah.
               </p>
 
               <div className="flex flex-wrap items-center gap-4">

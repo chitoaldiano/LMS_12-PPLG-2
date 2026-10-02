@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,13 +20,13 @@ export default function LoginPage() {
       const res = await fetch("/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ identifier, password }),
       });
 
       const result = await res.json();
 
       if (!result.success) {
-        setErrorMsg(result.message || "Username atau password salah");
+        setErrorMsg(result.message || "Login atau password salah");
         setIsLoading(false);
         return;
       }
@@ -87,20 +87,23 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
-                htmlFor="username"
+                htmlFor="identifier"
                 className="block text-sm font-medium text-[#1F2430] mb-1.5"
               >
-                Username
+                NISN / NIP / Email / Username
               </label>
               <input
-                id="username"
+                id="identifier"
                 type="text"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Masukkan username Anda"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Sesuai role kamu (lihat keterangan di bawah)"
                 className="w-full px-3 py-2.5 rounded-lg border border-[#D8D3C8] bg-white text-[#1F2430] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#C6992F] focus:border-transparent transition"
               />
+              <p className="text-[11px] text-[#9CA3AF] mt-1.5 leading-relaxed">
+                Siswa: NISN &middot; Guru &amp; Kurikulum: Email &middot; Kepala Sekolah: NIP &middot; Admin: Username
+              </p>
             </div>
 
             <div>

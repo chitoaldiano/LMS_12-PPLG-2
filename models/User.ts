@@ -1,26 +1,65 @@
-// models/User.js
+// models/User.ts
 // Sesuai catatan whiteboard-mu: ada 5 role -> admin, guru, siswa, kepsek, kurikulum
 // Login pakai USERNAME. Field detail (NIS/NIP/telepon/dll) sesuai form Tambah Siswa/Guru.
 
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 
-const UserSchema = new mongoose.Schema(
+export interface IUser extends Document {
+  nama: string;
+  username?: string; // login khusus ADMIN
+  email?: string; // login khusus GURU & KURIKULUM
+  password: string;
+  role: "admin" | "guru" | "siswa" | "kepsek" | "kurikulum";
+  noTelepon?: string;
+  jenisKelamin?: "Laki-laki" | "Perempuan" | "";
+  alamat?: string;
+  status?: string;
+  foto?: string;
+  nis?: string; // nomor induk sekolah (data internal, BUKAN login)
+  nisn?: string; // login khusus SISWA
+  kelas?: string;
+  jurusan?: string;
+  nip?: string; // login khusus KEPALA SEKOLAH
+  mataPelajaran?: string[];
+}
+
+const UserSchema = new Schema<IUser>(
   {
     nama: {
       type: String,
       required: true,
     },
+    // Login khusus ADMIN. Sparse = boleh kosong buat role lain tanpa bentrok unique index.
     username: {
       type: String,
-      required: true,
+      required: function (this: IUser) {
+        return this.role === "admin";
+      },
       unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
     },
+    // Login khusus GURU & KURIKULUM
     email: {
       type: String,
-      required: false,
+      required: function (this: IUser) {
+        return this.role === "guru" || this.role === "kurikulum";
+      },
+      unique: true,
+      sparse: true,
       lowercase: true,
+      trim: true,
+    },
+    // Login khusus SISWA (beda dari NIS di bawah, yang cuma data internal sekolah)
+    nisn: {
+      type: String,
+      required: function (this: IUser) {
+        return this.role === "siswa";
+      },
+      unique: true,
+      sparse: true,
+      trim: true,
     },
     password: {
       type: String,
@@ -56,13 +95,13 @@ const UserSchema = new mongoose.Schema(
     // Field khusus siswa
     nis: {
       type: String,
-      required: function () {
+      required: function (this: IUser) {
         return this.role === "siswa";
       },
     },
     kelas: {
       type: String, // contoh: "X PPLG 1"
-      required: function () {
+      required: function (this: IUser) {
         return this.role === "siswa";
       },
     },
@@ -70,12 +109,15 @@ const UserSchema = new mongoose.Schema(
       type: String, // khusus siswa, contoh: PPLG
       required: false,
     },
-    // Field khusus guru
+    // Login khusus KEPALA SEKOLAH. Guru masih boleh isi NIP sbg data, tapi tidak wajib & tidak dipakai login.
     nip: {
       type: String,
-      required: function () {
-        return this.role === "guru";
+      required: function (this: IUser) {
+        return this.role === "kepsek";
       },
+      unique: true,
+      sparse: true,
+      trim: true,
     },
     mataPelajaran: {
       type: [String],
@@ -85,4 +127,4 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.User || mongoose.model("User", UserSchema);
+export default (mongoose.models.User as Model<IUser>) || mongoose.model<IUser>("User", UserSchema);
