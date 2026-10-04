@@ -9,13 +9,13 @@ export default function TambahSiswaPage() {
   const [form, setForm] = useState({
     nama: "",
     nis: "",
+    nisn: "",
     kelas: "",
     jurusan: "",
     noTelepon: "",
     jenisKelamin: "",
     alamat: "",
     email: "",
-    username: "",
     password: "",
     status: "Aktif",
   });
@@ -47,16 +47,13 @@ export default function TambahSiswaPage() {
     setIsSubmitting(true);
 
     try {
-      // Username otomatis dibuat dari NIS kalau belum diisi manual
-      const usernameFinal = form.username || form.nis;
-
       const payload = {
         nama: form.nama,
-        username: usernameFinal,
         email: form.email,
         password: form.password,
         role: "siswa",
         nis: form.nis,
+        nisn: form.nisn,
         kelas: form.kelas,
         jurusan: form.jurusan,
         noTelepon: form.noTelepon,
@@ -142,9 +139,15 @@ export default function TambahSiswaPage() {
                 className="w-full px-3 py-2.5 rounded-lg border border-[#D8D3C8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]" />
             </Field>
 
-            <Field label="NIS" required>
+            <Field label="NIS (data sekolah)" required>
               <input required placeholder="Masukkan NIS Anda" value={form.nis}
                 onChange={(e) => setForm({ ...form, nis: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-lg border border-[#D8D3C8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]" />
+            </Field>
+
+            <Field label="NISN (dipakai untuk login)" required>
+              <input required placeholder="Masukkan NISN Anda" value={form.nisn}
+                onChange={(e) => setForm({ ...form, nisn: e.target.value })}
                 className="w-full px-3 py-2.5 rounded-lg border border-[#D8D3C8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]" />
             </Field>
 
@@ -196,12 +199,6 @@ export default function TambahSiswaPage() {
               <textarea required rows={3} placeholder="Masukkan Alamat Lengkap Anda" value={form.alamat}
                 onChange={(e) => setForm({ ...form, alamat: e.target.value })}
                 className="w-full px-3 py-2.5 rounded-lg border border-[#D8D3C8] bg-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#C6992F]" />
-            </Field>
-
-            <Field label="Username (opsional, default: NIS)">
-              <input placeholder="Kosongkan jika ingin memakai NIS" value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#D8D3C8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]" />
             </Field>
 
             <Field label="Password" required>
