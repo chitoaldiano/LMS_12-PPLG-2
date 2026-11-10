@@ -36,6 +36,9 @@ const FORM_PENGUMUMAN_KOSONG = {
   prioritas: "biasa",
 };
 
+const INPUT_EDIT =
+  "w-full px-3 py-2 rounded-lg border border-[#D8D3C8] text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]";
+
 const Icon = {
   beranda: (p) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...p}>
@@ -143,9 +146,19 @@ export default function AdminDashboard() {
 
   const [userDihapus, setUserDihapus] = useState(null);
 
+  const [userDiedit, setUserDiedit] = useState<any>(null);
+  const [formEdit, setFormEdit] = useState<any>({});
+  const [formEditError, setFormEditError] = useState("");
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
   const [kelasList, setKelasList] = useState([]);
   const [isLoadingKelas, setIsLoadingKelas] = useState(true);
   const [kelasDihapus, setKelasDihapus] = useState(null);
+
+  const [kelasDiedit, setKelasDiedit] = useState<any>(null);
+  const [formEditKelas, setFormEditKelas] = useState<any>({});
+  const [formEditKelasError, setFormEditKelasError] = useState("");
+  const [isSubmittingEditKelas, setIsSubmittingEditKelas] = useState(false);
 
   const [pengumumanList, setPengumumanList] = useState([]);
   const [isLoadingPengumuman, setIsLoadingPengumuman] = useState(true);
@@ -290,6 +303,150 @@ export default function AdminDashboard() {
     } catch (err) {
       setFormError("Tidak bisa terhubung ke server");
       setIsSubmitting(false);
+    }
+  }
+
+  function bukaEditUser(u) {
+    setFormEditError("");
+    setUserDiedit(u);
+    setFormEdit({
+      nama: u.nama || "",
+      username: u.username || "",
+      email: u.email || "",
+      nip: u.nip || "",
+      nis: u.nis || "",
+      nisn: u.nisn || "",
+      kelas: u.kelas || "",
+      jurusan: u.jurusan || "",
+      noTelepon: u.noTelepon || "",
+      jenisKelamin: u.jenisKelamin || "",
+      alamat: u.alamat || "",
+      status: u.status || "Aktif",
+      mataPelajaran: (u.mataPelajaran || []).join(", "),
+      password: "",
+    });
+  }
+
+  async function handleSimpanEditUser(e) {
+    e.preventDefault();
+    if (!userDiedit) return;
+    setFormEditError("");
+    setIsSubmittingEdit(true);
+
+    try {
+      const role = userDiedit.role;
+      const payload: any = { nama: formEdit.nama };
+
+      // Field login beda per role: admin->username, kepsek->nip, kurikulum/guru->email, siswa->nisn
+      if (role === "admin") payload.username = formEdit.username;
+      if (role === "kepsek") payload.nip = formEdit.nip;
+      if (role === "kurikulum") payload.email = formEdit.email;
+      if (role === "siswa") {
+        Object.assign(payload, {
+          nis: formEdit.nis,
+          nisn: formEdit.nisn,
+          kelas: formEdit.kelas,
+          jurusan: formEdit.jurusan,
+          email: formEdit.email,
+          noTelepon: formEdit.noTelepon,
+          jenisKelamin: formEdit.jenisKelamin,
+          alamat: formEdit.alamat,
+          status: formEdit.status,
+        });
+      }
+      if (role === "guru") {
+        Object.assign(payload, {
+          email: formEdit.email,
+          nip: formEdit.nip,
+          mataPelajaran: String(formEdit.mataPelajaran || "")
+            .split(",")
+            .map((m) => m.trim())
+            .filter(Boolean),
+          noTelepon: formEdit.noTelepon,
+          jenisKelamin: formEdit.jenisKelamin,
+          alamat: formEdit.alamat,
+          status: formEdit.status,
+        });
+      }
+      if (formEdit.password) payload.password = formEdit.password;
+
+      const res = await fetch(`/api/users/${userDiedit._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+
+      if (!result.success) {
+        setFormEditError(result.message || "Gagal menyimpan perubahan");
+        setIsSubmittingEdit(false);
+        return;
+      }
+
+      // Kalau admin mengedit akunnya sendiri, samakan data login di browser
+      if (currentUser && userDiedit._id === currentUser._id) {
+        const baru = { ...currentUser, ...result.data };
+        localStorage.setItem("lms_user", JSON.stringify(baru));
+        setCurrentUser(baru);
+      }
+
+      setUserDiedit(null);
+      setIsSubmittingEdit(false);
+      muatUlangUser();
+    } catch (err) {
+      setFormEditError("Tidak bisa terhubung ke server");
+      setIsSubmittingEdit(false);
+    }
+  }
+
+  function bukaEditKelas(k) {
+    setFormEditKelasError("");
+    setKelasDiedit(k);
+    setFormEditKelas({
+      namaKelas: k.namaKelas || "",
+      tingkat: k.tingkat || "X",
+      jurusan: k.jurusan || "",
+      tahunAjaran: k.tahunAjaran || "",
+      kapasitas: k.kapasitas ?? "",
+      waliKelas: k.waliKelas?._id || "",
+    });
+  }
+
+  async function handleSimpanEditKelas(e) {
+    e.preventDefault();
+    if (!kelasDiedit) return;
+    setFormEditKelasError("");
+    setIsSubmittingEditKelas(true);
+
+    try {
+      // Nama kelas sengaja TIDAK dikirim (nggak bisa diubah) supaya data siswa/materi/tugas/kuis tetap nyambung
+      const payload: any = {
+        tingkat: formEditKelas.tingkat,
+        jurusan: formEditKelas.jurusan,
+        tahunAjaran: formEditKelas.tahunAjaran,
+        kapasitas: formEditKelas.kapasitas === "" ? null : Number(formEditKelas.kapasitas),
+        waliKelas: formEditKelas.waliKelas || null,
+      };
+
+      const res = await fetch(`/api/kelas/${kelasDiedit._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+
+      if (!result.success) {
+        setFormEditKelasError(result.message || "Gagal menyimpan perubahan");
+        setIsSubmittingEditKelas(false);
+        return;
+      }
+
+      setKelasDiedit(null);
+      setIsSubmittingEditKelas(false);
+      muatUlangKelas();
+    } catch (err) {
+      setFormEditKelasError("Tidak bisa terhubung ke server");
+      setIsSubmittingEditKelas(false);
     }
   }
 
@@ -583,9 +740,14 @@ export default function AdminDashboard() {
                       <td className="px-6 py-3.5 text-[#6B7280]">{u.nip || "-"}</td>
                       <td className="px-6 py-3.5 text-[#6B7280]">{u.mataPelajaran?.join(", ") || "-"}</td>
                       <td className="px-6 py-3.5 text-right">
-                        <button onClick={() => setUserDihapus(u)} className="text-xs font-medium text-red-600 hover:text-red-700">
-                          Hapus
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button onClick={() => bukaEditUser(u)} className="text-xs font-medium text-[#0F1B33] hover:text-[#C6992F]">
+                            Edit
+                          </button>
+                          <button onClick={() => setUserDihapus(u)} className="text-xs font-medium text-red-600 hover:text-red-700">
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -623,9 +785,14 @@ export default function AdminDashboard() {
                       <td className="px-6 py-3.5 text-[#6B7280]">{u.kelas || "-"}</td>
                       <td className="px-6 py-3.5 text-[#6B7280]">{u.jurusan || "-"}</td>
                       <td className="px-6 py-3.5 text-right">
-                        <button onClick={() => setUserDihapus(u)} className="text-xs font-medium text-red-600 hover:text-red-700">
-                          Hapus
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button onClick={() => bukaEditUser(u)} className="text-xs font-medium text-[#0F1B33] hover:text-[#C6992F]">
+                            Edit
+                          </button>
+                          <button onClick={() => setUserDihapus(u)} className="text-xs font-medium text-red-600 hover:text-red-700">
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -663,9 +830,14 @@ export default function AdminDashboard() {
                       <td className="px-6 py-3.5 text-[#6B7280]">{k.waliKelas?.nama || "-"}</td>
                       <td className="px-6 py-3.5 text-[#6B7280]">{jumlahSiswaDiKelas(k.namaKelas)} siswa</td>
                       <td className="px-6 py-3.5 text-right">
-                        <button onClick={() => setKelasDihapus(k)} className="text-xs font-medium text-red-600 hover:text-red-700">
-                          Hapus
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button onClick={() => bukaEditKelas(k)} className="text-xs font-medium text-[#0F1B33] hover:text-[#C6992F]">
+                            Edit
+                          </button>
+                          <button onClick={() => setKelasDihapus(k)} className="text-xs font-medium text-red-600 hover:text-red-700">
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -788,9 +960,14 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="px-6 py-3.5 text-right">
-                        <button onClick={() => setUserDihapus(u)} className="text-xs font-medium text-red-600 hover:text-red-700">
-                          Hapus
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button onClick={() => bukaEditUser(u)} className="text-xs font-medium text-[#0F1B33] hover:text-[#C6992F]">
+                            Edit
+                          </button>
+                          <button onClick={() => setUserDihapus(u)} className="text-xs font-medium text-red-600 hover:text-red-700">
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -866,6 +1043,183 @@ export default function AdminDashboard() {
                 className="w-full py-2.5 rounded-lg bg-[#0F1B33] text-white text-sm font-semibold hover:bg-[#C6992F] hover:text-[#0F1B33] transition disabled:opacity-60">
                 {isSubmitting ? "Menyimpan..." : "Simpan"}
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit User (guru / siswa / admin / kepsek / kurikulum) */}
+      {userDiedit && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-semibold text-[#0F1B33] text-lg">Edit {ROLE_LABEL[userDiedit.role] || "User"}</h3>
+              <button onClick={() => setUserDiedit(null)} className="text-[#9CA3AF] hover:text-[#6B7280] text-xl leading-none">
+                &times;
+              </button>
+            </div>
+
+            {formEditError && (
+              <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {formEditError}
+              </div>
+            )}
+
+            <form onSubmit={handleSimpanEditUser} className="space-y-4">
+              <Field label="Nama lengkap">
+                <input required value={formEdit.nama} onChange={(e) => setFormEdit({ ...formEdit, nama: e.target.value })} className={INPUT_EDIT} />
+              </Field>
+
+              {userDiedit.role === "admin" && (
+                <Field label="Username (dipakai untuk login)">
+                  <input required value={formEdit.username} onChange={(e) => setFormEdit({ ...formEdit, username: e.target.value })} className={INPUT_EDIT} />
+                </Field>
+              )}
+              {userDiedit.role === "kepsek" && (
+                <Field label="NIP (dipakai untuk login)">
+                  <input required value={formEdit.nip} onChange={(e) => setFormEdit({ ...formEdit, nip: e.target.value })} className={INPUT_EDIT} />
+                </Field>
+              )}
+              {userDiedit.role === "kurikulum" && (
+                <Field label="Email (dipakai untuk login)">
+                  <input type="email" required value={formEdit.email} onChange={(e) => setFormEdit({ ...formEdit, email: e.target.value })} className={INPUT_EDIT} />
+                </Field>
+              )}
+
+              {userDiedit.role === "siswa" && (
+                <>
+                  <Field label="NIS (data sekolah)">
+                    <input required value={formEdit.nis} onChange={(e) => setFormEdit({ ...formEdit, nis: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="NISN (dipakai untuk login)">
+                    <input required value={formEdit.nisn} onChange={(e) => setFormEdit({ ...formEdit, nisn: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="Kelas">
+                    <input required value={formEdit.kelas} onChange={(e) => setFormEdit({ ...formEdit, kelas: e.target.value })} placeholder="Contoh: X PPLG 1" className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="Jurusan">
+                    <input required value={formEdit.jurusan} onChange={(e) => setFormEdit({ ...formEdit, jurusan: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="Email (opsional)">
+                    <input type="email" value={formEdit.email} onChange={(e) => setFormEdit({ ...formEdit, email: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                </>
+              )}
+
+              {userDiedit.role === "guru" && (
+                <>
+                  <Field label="Email (dipakai untuk login)">
+                    <input type="email" required value={formEdit.email} onChange={(e) => setFormEdit({ ...formEdit, email: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="NIP (opsional)">
+                    <input value={formEdit.nip} onChange={(e) => setFormEdit({ ...formEdit, nip: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="Mata Pelajaran (pisahkan dengan koma)">
+                    <input value={formEdit.mataPelajaran} onChange={(e) => setFormEdit({ ...formEdit, mataPelajaran: e.target.value })} placeholder="Contoh: Matematika, Fisika" className={INPUT_EDIT} />
+                  </Field>
+                </>
+              )}
+
+              {(userDiedit.role === "siswa" || userDiedit.role === "guru") && (
+                <>
+                  <Field label="No. Telepon">
+                    <input value={formEdit.noTelepon} onChange={(e) => setFormEdit({ ...formEdit, noTelepon: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="Jenis Kelamin">
+                    <select value={formEdit.jenisKelamin} onChange={(e) => setFormEdit({ ...formEdit, jenisKelamin: e.target.value })} className={INPUT_EDIT}>
+                      <option value="">Pilih Kelamin</option>
+                      <option value="Laki-laki">Laki-laki</option>
+                      <option value="Perempuan">Perempuan</option>
+                    </select>
+                  </Field>
+                  <Field label="Alamat">
+                    <textarea rows={2} value={formEdit.alamat} onChange={(e) => setFormEdit({ ...formEdit, alamat: e.target.value })} className={INPUT_EDIT} />
+                  </Field>
+                  <Field label="Status">
+                    <select value={formEdit.status} onChange={(e) => setFormEdit({ ...formEdit, status: e.target.value })} className={INPUT_EDIT}>
+                      <option value="Aktif">Aktif</option>
+                      <option value="Tidak Aktif">Tidak Aktif</option>
+                    </select>
+                  </Field>
+                </>
+              )}
+
+              <Field label="Password baru (kosongkan kalau tidak diubah)">
+                <input type="password" value={formEdit.password} onChange={(e) => setFormEdit({ ...formEdit, password: e.target.value })} className={INPUT_EDIT} />
+              </Field>
+
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setUserDiedit(null)} className="flex-1 py-2.5 rounded-lg border border-[#D8D3C8] text-sm font-medium text-[#1F2430]">
+                  Batal
+                </button>
+                <button type="submit" disabled={isSubmittingEdit}
+                  className="flex-1 py-2.5 rounded-lg bg-[#0F1B33] text-white text-sm font-semibold hover:bg-[#C6992F] hover:text-[#0F1B33] transition disabled:opacity-60">
+                  {isSubmittingEdit ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit Kelas */}
+      {kelasDiedit && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-semibold text-[#0F1B33] text-lg">Edit Kelas</h3>
+              <button onClick={() => setKelasDiedit(null)} className="text-[#9CA3AF] hover:text-[#6B7280] text-xl leading-none">
+                &times;
+              </button>
+            </div>
+
+            {formEditKelasError && (
+              <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {formEditKelasError}
+              </div>
+            )}
+
+            <form onSubmit={handleSimpanEditKelas} className="space-y-4">
+              <Field label="Nama Kelas">
+                <input disabled value={formEditKelas.namaKelas} className={INPUT_EDIT + " bg-[#F5F3EE] text-[#9CA3AF]"} />
+                <p className="text-[11px] text-[#9CA3AF] mt-1">
+                  Nama kelas tidak bisa diubah, supaya data siswa, materi, tugas, dan kuis tetap nyambung. Kalau salah nama, hapus lalu buat kelas baru.
+                </p>
+              </Field>
+              <Field label="Wali Kelas">
+                <select value={formEditKelas.waliKelas} onChange={(e) => setFormEditKelas({ ...formEditKelas, waliKelas: e.target.value })} className={INPUT_EDIT}>
+                  <option value="">Tidak ada</option>
+                  {daftarGuru.map((g) => (
+                    <option key={g._id} value={g._id}>{g.nama}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Jurusan">
+                <input required value={formEditKelas.jurusan} onChange={(e) => setFormEditKelas({ ...formEditKelas, jurusan: e.target.value })} className={INPUT_EDIT} />
+              </Field>
+              <Field label="Tahun Ajaran">
+                <input value={formEditKelas.tahunAjaran} onChange={(e) => setFormEditKelas({ ...formEditKelas, tahunAjaran: e.target.value })} placeholder="Contoh: 2026/2027" className={INPUT_EDIT} />
+              </Field>
+              <Field label="Tingkat">
+                <select value={formEditKelas.tingkat} onChange={(e) => setFormEditKelas({ ...formEditKelas, tingkat: e.target.value })} className={INPUT_EDIT}>
+                  <option value="X">X</option>
+                  <option value="XI">XI</option>
+                  <option value="XII">XII</option>
+                </select>
+              </Field>
+              <Field label="Kapasitas Siswa">
+                <input type="number" min="1" value={formEditKelas.kapasitas} onChange={(e) => setFormEditKelas({ ...formEditKelas, kapasitas: e.target.value })} className={INPUT_EDIT} />
+              </Field>
+
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setKelasDiedit(null)} className="flex-1 py-2.5 rounded-lg border border-[#D8D3C8] text-sm font-medium text-[#1F2430]">
+                  Batal
+                </button>
+                <button type="submit" disabled={isSubmittingEditKelas}
+                  className="flex-1 py-2.5 rounded-lg bg-[#0F1B33] text-white text-sm font-semibold hover:bg-[#C6992F] hover:text-[#0F1B33] transition disabled:opacity-60">
+                  {isSubmittingEditKelas ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

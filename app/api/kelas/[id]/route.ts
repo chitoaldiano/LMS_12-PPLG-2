@@ -1,26 +1,27 @@
-// app/api/materi/route.ts
-// Contoh pemakaian koneksi + model. Bisa diakses lewat:
-// GET  /api/materi          -> ambil semua materi
-// POST /api/materi          -> tambah materi baru
+// app/api/kelas/[id]/route.ts
+// Akses: DELETE /api/kelas/ID_KELAS -> hapus kelas
+//        PUT    /api/kelas/ID_KELAS -> edit kelas
 
 import connectDB from "@/lib/mongodb";
-import Materi from "@/models/Materi";
+import Kelas from "@/models/Kelas";
 
-export async function GET(request: Request) {
+type Params = { params: Promise<{ id: string }> };
+
+export async function DELETE(request: Request, { params }: Params) {
   try {
-    await connectDB(); // WAJIB dipanggil di setiap API route sebelum query
+    await connectDB();
+    const { id } = await params;
 
-    // Contoh filter pakai query param, misal: /api/materi?kelas=X IPA 1
-    const { searchParams } = new URL(request.url);
-    const kelas = searchParams.get("kelas");
+    const dihapus = await Kelas.findByIdAndDelete(id);
 
-    const filter = kelas ? { kelas } : {};
+    if (!dihapus) {
+      return Response.json(
+        { success: false, message: "Kelas tidak ditemukan" },
+        { status: 404 }
+      );
+    }
 
-    const semuaMateri = await Materi.find(filter)
-      .populate("guru", "nama") // ambil juga nama gurunya, bukan cuma ID
-      .sort({ createdAt: -1 }); // terbaru duluan
-
-    return Response.json({ success: true, data: semuaMateri });
+    return Response.json({ success: true, message: "Kelas berhasil dihapus" });
   } catch (error: any) {
     console.error(error);
     return Response.json(
@@ -30,21 +31,33 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function PUT(request: Request, { params }: Params) {
   try {
     await connectDB();
-
+    const { id } = await params;
     const body = await request.json();
-    // body contoh: { judul, mataPelajaran, kelas, tipe, fileUrl, guru }
 
-    const materiBaru = await Materi.create(body);
+    const kelasUpdate = await Kelas.findByIdAndUpdate(id, body, {
+      new: true,
+      runValidators: true,
+    });
 
-    return Response.json(
-      { success: true, data: materiBaru },
-      { status: 201 }
-    );
+    if (!kelasUpdate) {
+      return Response.json(
+        { success: false, message: "Kelas tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    return Response.json({ success: true, data: kelasUpdate });
   } catch (error: any) {
     console.error(error);
+    if (error.code === 11000) {
+      return Response.json(
+        { success: false, message: "Nama kelas sudah dipakai kelas lain" },
+        { status: 409 }
+      );
+    }
     return Response.json(
       { success: false, message: error.message },
       { status: 400 }
