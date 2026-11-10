@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     await connectDB();
 
     const body = await request.json();
-    const { namaKelas, tingkat, jurusan, waliKelas } = body;
+    const { namaKelas, tingkat, jurusan, waliKelas, tahunAjaran, kapasitas } = body;
 
     if (!namaKelas || !tingkat || !jurusan) {
       return Response.json(
@@ -48,6 +48,8 @@ export async function POST(request: Request) {
 
     const dataBaru: any = { namaKelas, tingkat, jurusan };
     if (waliKelas) dataBaru.waliKelas = waliKelas;
+    if (tahunAjaran) dataBaru.tahunAjaran = tahunAjaran;
+    if (kapasitas !== undefined && kapasitas !== "" && kapasitas !== null) dataBaru.kapasitas = Number(kapasitas);
 
     const kelasBaru = await Kelas.create(dataBaru);
 
