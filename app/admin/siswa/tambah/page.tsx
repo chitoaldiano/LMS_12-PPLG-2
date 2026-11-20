@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const INPUT_CLASS =
   "box-border w-full min-w-0 max-w-full rounded-xl border border-[#E9D5E1] bg-white px-4 py-3 text-sm text-[#4C3447] outline-none transition placeholder:text-[#B99EAF] hover:border-[#D9A9C4] focus:border-[#A53D78] focus:ring-4 focus:ring-[#D95A91]/10";
@@ -138,9 +139,12 @@ export default function TambahSiswaPage() {
             </svg>
             <span>Kembali ke Dashboard</span>
           </button>
-          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#EAD7E3] bg-white/80 px-3.5 py-2 text-xs font-bold tracking-wide text-[#96527B]">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-[#D95A91]" />
-            <span>ADMINISTRASI SISWA</span>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#EAD7E3] bg-white/80 px-3.5 py-2 text-xs font-bold tracking-wide text-[#96527B]">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-[#D95A91]" />
+              <span>ADMINISTRASI SISWA</span>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
 

@@ -112,8 +112,21 @@ body {
 .dark .bg-\[\#FFF9FC\],
 .dark .bg-\[\#FCF7FA\],
 .dark .bg-\[\#FCF5F9\],
-.dark .bg-\[\#FBF7FA\] {
+.dark .bg-\[\#FBF7FA\],
+.dark .bg-\[\#FBF6F9\],
+.dark .bg-\[\#FBF5F8\],
+.dark .bg-\[\#FBF2F7\],
+.dark .bg-\[\#FBF0F6\],
+.dark .bg-\[\#FCF1F6\],
+.dark .bg-\[\#FDF1F6\],
+.dark .bg-\[\#FFF4F8\],
+.dark .bg-\[\#FFF1F2\] {
   background-color: #0E080D !important;
+}
+
+/* Radial Gradient background di Tambah Guru & Tambah Siswa */
+.dark main[class*="radial-gradient"] {
+  background: #0E080D !important;
 }
 
 /* Surface & Card Backgrounds */
@@ -132,6 +145,7 @@ body {
 .dark .bg-\[\#FCEAF3\],
 .dark .bg-\[\#FCEEF3\],
 .dark .bg-\[\#FCE4F0\],
+.dark .bg-\[\#FCE7F1\],
 .dark .bg-\[\#FCEAF2\],
 .dark .bg-\[\#F9EEF4\],
 .dark .bg-\[\#F6E8F0\],
@@ -140,7 +154,10 @@ body {
 .dark .bg-\[\#F8EDF3\],
 .dark .bg-\[\#FBEAF2\],
 .dark .bg-\[\#F4E3EC\],
-.dark .bg-\[\#E8D5E1\] {
+.dark .bg-\[\#E8D5E1\],
+.dark .bg-\[\#FDF1F6\],
+.dark .bg-\[\#FFF4F8\],
+.dark .bg-\[\#FCF1F6\] {
   background-color: #2A1426 !important;
 }
 
@@ -154,26 +171,47 @@ body {
 .dark .hover\:bg-\[\#FAF7F9\]:hover,
 .dark .hover\:bg-\[\#FFF7FB\]:hover,
 .dark .hover\:bg-\[\#F9EEF4\]:hover,
-.dark .hover\:bg-\[\#F6E8F0\]:hover {
+.dark .hover\:bg-\[\#F6E8F0\]:hover,
+.dark .hover\:bg-\[\#FFF9FC\]:hover,
+.dark .hover\:bg-\[\#FDF1F6\]:hover,
+.dark .hover\:bg-\[\#FFF4F8\]:hover,
+.dark .hover\:bg-\[\#FCF1F6\]:hover {
   background-color: #2F172B !important;
 }
 
 /* Borders & Dividers */
 .dark .border-\[\#F0DCE8\],
 .dark .border-\[\#F0DDE8\],
+.dark .border-\[\#F0D3E1\],
+.dark .border-\[\#F0D8E4\],
 .dark .border-\[\#EDE3E9\],
 .dark .border-\[\#EEDCE7\],
+.dark .border-\[\#EED8E5\],
+.dark .border-\[\#EFD6E2\],
 .dark .border-\[\#F5D8E7\],
 .dark .border-\[\#F5E6EE\],
 .dark .border-\[\#F8EDF3\],
 .dark .border-\[\#F9EAF2\],
 .dark .border-\[\#F1CFE0\],
+.dark .border-\[\#F1C5CE\],
 .dark .border-\[\#F2B8D2\],
 .dark .border-\[\#F2D9E6\],
 .dark .border-\[\#F3B8D3\],
+.dark .border-\[\#F3E4EB\],
+.dark .border-\[\#F3E4EC\],
 .dark .border-\[\#F3E5ED\],
+.dark .border-\[\#F4E7EE\],
+.dark .border-\[\#F4E8EE\],
+.dark .border-\[\#E5C6D8\],
+.dark .border-\[\#E8C9D8\],
+.dark .border-\[\#E8C9D9\],
 .dark .border-\[\#E8C9DA\],
+.dark .border-\[\#E8CEDD\],
+.dark .border-\[\#E8D3E0\],
 .dark .border-\[\#E8D5E1\],
+.dark .border-\[\#E9C9D9\],
+.dark .border-\[\#E9D5E1\],
+.dark .border-\[\#EAD7E3\],
 .dark .border-\[\#EBCBDD\],
 .dark .border-\[\#ECCEDF\],
 .dark .border-\[\#FBEAF4\] {
@@ -190,47 +228,85 @@ body {
   --tw-ring-color: #1A1119 !important;
 }
 
-/* Typography — Headings & Primary Text */
+/* =========================================================
+   TYPOGRAPHY IN DARK MODE
+   ========================================================= */
+
+/* 1. Headings, Labels, Form Titles & Input Values (Teks Utama Sangat Terang) */
 .dark .text-\[\#59234F\],
 .dark .text-\[\#3D1437\],
 .dark .text-\[\#501D45\],
 .dark .text-\[\#42163B\],
 .dark .text-\[\#1E161C\],
 .dark .text-\[\#542044\],
+.dark .text-\[\#552044\],
+.dark .text-\[\#572044\],
 .dark .text-\[\#572047\],
 .dark .text-\[\#5B1F4B\],
 .dark .text-\[\#5C3B53\],
 .dark .text-\[\#4C3447\],
-.dark .text-\[\#2E1029\] {
+.dark .text-\[\#2E1029\],
+.dark .text-\[\#702653\],
+.dark .text-\[\#75405F\],
+.dark .text-\[\#752454\],
+.dark .text-\[\#7B285F\],
+.dark .hover\:text-\[\#702653\]:hover,
+.dark .hover\:text-\[\#752454\]:hover,
+.dark .hover\:text-\[\#7B285F\]:hover,
+.dark .hover\:text-\[\#5B1F4B\]:hover {
   color: #F5EEF3 !important;
 }
 
-/* Typography — Secondary & Muted Labels */
+/* 2. Secondary & Muted Labels, Deskripsi, Metadata, Subtitle */
 .dark .text-\[\#81506F\],
+.dark .text-\[\#81536D\],
 .dark .text-\[\#685664\],
 .dark .text-\[\#6B2858\],
 .dark .text-\[\#70295F\],
 .dark .text-\[\#70415F\],
+.dark .text-\[\#80516E\],
+.dark .text-\[\#805D74\],
+.dark .text-\[\#8A6680\],
 .dark .text-\[\#8A7182\],
 .dark .text-\[\#8B6B82\],
 .dark .text-\[\#8E7E8B\],
+.dark .text-\[\#96758A\],
+.dark .text-\[\#A16B89\],
+.dark .text-\[\#A4879A\],
 .dark .text-\[\#A78A9D\],
+.dark .text-\[\#A87594\],
+.dark .text-\[\#A9879B\],
 .dark .text-\[\#AFA1AC\],
+.dark .text-\[\#B391A5\],
 .dark .text-\[\#B596AA\],
+.dark .text-\[\#B78DA6\],
 .dark .text-\[\#B99EAF\] {
   color: #BDA9B8 !important;
 }
 
-/* Typography — Brand Accent Colors (Rose / Pink) */
+/* 3. Brand Accent & Badge Colors (Rose / Pink yang Luminous) */
 .dark .text-\[\#BD4564\],
 .dark .text-\[\#D45D79\],
+.dark .text-\[\#D45A91\],
 .dark .text-\[\#D94383\],
 .dark .text-\[\#D95A91\],
 .dark .text-\[\#D85A93\],
 .dark .text-\[\#B52D78\],
+.dark .text-\[\#B45B89\],
+.dark .text-\[\#B65A89\],
+.dark .text-\[\#B65B8A\],
 .dark .text-\[\#8B3569\],
+.dark .text-\[\#963D70\],
+.dark .text-\[\#96527B\],
+.dark .text-\[\#9B4D78\],
+.dark .text-\[\#9C3D72\],
+.dark .text-\[\#9E3D73\],
 .dark .text-\[\#A04478\],
+.dark .text-\[\#A33F76\],
 .dark .text-\[\#A83E75\],
+.dark .text-\[\#A84E7E\],
+.dark .text-\[\#C17AA0\],
+.dark .text-\[\#C94D88\],
 .dark .text-\[\#E27B94\] {
   color: #F285A0 !important;
 }
@@ -312,24 +388,32 @@ body {
 }
 
 /* =========================================================
-   HERO BANNER GRADIENTS (SISWA, GURU & ADMIN DASHBOARDS)
+   HERO BANNER & HEADER CARD GRADIENTS
    ========================================================= */
 
 .dark .from-\[\#FCE5F0\],
 .dark .from-\[\#FCEAF2\],
-.dark .from-\[\#FCF0F6\] {
+.dark .from-\[\#FCF0F6\],
+.dark .from-\[\#FBEAF2\] {
   --tw-gradient-from: #3D1635 !important;
 }
 
 .dark .via-\[\#F8D8E8\],
-.dark .via-\[\#F7DCE9\] {
+.dark .via-\[\#F7DCE9\],
+.dark .via-\[\#F8E4EE\] {
   --tw-gradient-via: #2E1128 !important;
 }
 
 .dark .to-\[\#E9BBD4\],
 .dark .to-\[\#E7B0CD\],
-.dark .to-\[\#F8E4EF\] {
+.dark .to-\[\#F8E4EF\],
+.dark .to-\[\#F1D5E5\] {
   --tw-gradient-to: #210A1C !important;
+}
+
+/* Card header gradient di Tambah Kelas */
+.dark .from-\[\#FFF8FB\] {
+  --tw-gradient-from: #261623 !important;
 }
 
 .dark .border-\[\#F1CFE0\],

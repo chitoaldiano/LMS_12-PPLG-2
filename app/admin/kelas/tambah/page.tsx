@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type Guru = {
   _id: string;
@@ -123,16 +124,19 @@ export default function TambahKelasPage() {
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-[#FBF6F9] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
       <div className="mx-auto w-full max-w-[1440px] min-w-0">
-        <button
-          type="button"
-          onClick={() => router.push("/admin")}
-          className="mb-5 inline-flex max-w-full items-center gap-2 rounded-lg text-sm font-medium text-[#8A6680] transition hover:text-[#702653]"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M11 18l-6-6 6-6" />
-          </svg>
-          <span className="truncate">Kembali ke Dashboard</span>
-        </button>
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/admin")}
+            className="inline-flex max-w-full items-center gap-2 rounded-lg text-sm font-medium text-[#8A6680] transition hover:text-[#702653]"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M11 18l-6-6 6-6" />
+            </svg>
+            <span className="truncate">Kembali ke Dashboard</span>
+          </button>
+          <ThemeToggle />
+        </div>
 
         <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div className="min-w-0">
