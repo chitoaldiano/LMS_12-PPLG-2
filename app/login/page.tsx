@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface RoleHint {
   role: string;
@@ -108,6 +109,14 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center bg-[#FAF7F9] p-4 text-[#1E161C] antialiased sm:p-6 lg:p-8">
+      {/* Theme Toggle Button */}
+      <div className="absolute top-4 right-4 z-30">
+        <ThemeToggle
+          rounded="full"
+          className="w-10 h-10 border border-[#EDE3E9] dark:border-[#331D2F] bg-white/90 dark:bg-[#1A1119]/90 shadow-sm backdrop-blur-sm"
+        />
+      </div>
+
       {/* Background Subtle Ambient Glow */}
       <div
         aria-hidden="true"

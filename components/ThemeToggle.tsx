@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 
 export default function ThemeToggle({
   className = "",
-  compact = false,
+  rounded = "full",
 }: {
   className?: string;
-  compact?: boolean;
+  rounded?: "full" | "xl";
 }) {
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -61,13 +61,12 @@ export default function ThemeToggle({
     }
   };
 
-  // Placeholder sebelum mounted agar menghindari mismatch SSR
+  const roundedCls = rounded === "xl" ? "rounded-xl" : "rounded-full";
+
   if (!mounted) {
     return (
       <div
-        className={`inline-flex items-center justify-center rounded-xl border border-[#F0DCE8] dark:border-[#331D2F] bg-white dark:bg-[#1A1119] ${
-          compact ? "h-9 w-9" : "h-10 w-10 sm:h-11 sm:w-11"
-        } ${className}`}
+        className={`w-9 h-9 sm:w-11 sm:h-11 ${roundedCls} shrink-0 opacity-0 ${className}`}
         aria-hidden="true"
       />
     );
@@ -79,9 +78,7 @@ export default function ThemeToggle({
       onClick={toggle}
       title={isDark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
       aria-label={isDark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
-      className={`inline-flex items-center justify-center rounded-xl border border-[#F0DCE8] dark:border-[#331D2F] bg-white dark:bg-[#1A1119] text-[#59234F] dark:text-[#F5EEF3] hover:bg-[#FFF0F6] dark:hover:bg-[#271424] shadow-xs transition-colors duration-200 cursor-pointer ${
-        compact ? "h-9 w-9" : "h-10 w-10 sm:h-11 sm:w-11"
-      } ${className}`}
+      className={`relative w-9 h-9 sm:w-11 sm:h-11 ${roundedCls} shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer text-[#59234F] dark:text-[#F5EEF3] hover:bg-[#FFF0F6] dark:hover:bg-[#271424] active:scale-95 ${className}`}
     >
       {isDark ? (
         // Ikon Matahari (Sun)
@@ -92,7 +89,7 @@ export default function ThemeToggle({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-5 w-5 text-amber-400 transition-transform duration-200 hover:rotate-45"
+          className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 transition-transform duration-300 rotate-0 hover:rotate-90"
         >
           <circle cx="12" cy="12" r="4" />
           <path d="M12 2v2" />
@@ -113,7 +110,7 @@ export default function ThemeToggle({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-5 w-5 text-[#59234F] transition-transform duration-200 hover:-rotate-12"
+          className="w-5 h-5 sm:w-6 sm:h-6 text-[#59234F] transition-transform duration-300 rotate-0 hover:-rotate-12"
         >
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
         </svg>

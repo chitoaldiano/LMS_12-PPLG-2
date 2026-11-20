@@ -96,17 +96,27 @@ body {
   color-scheme: dark;
 }
 
-/* Canvas & Surface Backgrounds */
+/* Scrollbar dalam dark mode */
+.dark * {
+  scrollbar-color: #382034 transparent;
+}
+
+/* Canvas & Page Backgrounds */
 .dark body {
   background-color: #0E080D !important;
   color: #F5EEF3 !important;
 }
 
 .dark .bg-\[\#FFF7FB\],
-.dark .bg-\[\#FAF7F9\] {
+.dark .bg-\[\#FAF7F9\],
+.dark .bg-\[\#FFF9FC\],
+.dark .bg-\[\#FCF7FA\],
+.dark .bg-\[\#FCF5F9\],
+.dark .bg-\[\#FBF7FA\] {
   background-color: #0E080D !important;
 }
 
+/* Surface & Card Backgrounds */
 .dark .bg-white {
   background-color: #1A1119 !important;
 }
@@ -114,31 +124,58 @@ body {
 .dark .bg-white\/95,
 .dark .bg-white\/90,
 .dark .bg-white\/80 {
-  background-color: rgba(26, 17, 25, 0.92) !important;
+  background-color: rgba(26, 17, 25, 0.94) !important;
 }
 
-.dark .bg-\[\#FFF0F6\] {
-  background-color: #271424 !important;
-}
-
+/* Soft Pink Badges & Subtle Containers */
+.dark .bg-\[\#FFF0F6\],
 .dark .bg-\[\#FCEAF3\],
 .dark .bg-\[\#FCEEF3\],
-.dark .bg-\[\#FCE4F0\] {
-  background-color: #2E1528 !important;
+.dark .bg-\[\#FCE4F0\],
+.dark .bg-\[\#FCEAF2\],
+.dark .bg-\[\#F9EEF4\],
+.dark .bg-\[\#F6E8F0\],
+.dark .bg-\[\#F9E6F0\],
+.dark .bg-\[\#F5D5E5\],
+.dark .bg-\[\#F8EDF3\],
+.dark .bg-\[\#FBEAF2\],
+.dark .bg-\[\#F4E3EC\],
+.dark .bg-\[\#E8D5E1\] {
+  background-color: #2A1426 !important;
 }
 
 .dark .bg-\[\#F8D9E8\] {
   background-color: #381B30 !important;
 }
 
+/* Hover States on Light Badges/Rows */
+.dark .hover\:bg-\[\#FFF0F6\]:hover,
+.dark .hover\:bg-\[\#FCEEF3\]:hover,
+.dark .hover\:bg-\[\#FAF7F9\]:hover,
+.dark .hover\:bg-\[\#FFF7FB\]:hover,
+.dark .hover\:bg-\[\#F9EEF4\]:hover,
+.dark .hover\:bg-\[\#F6E8F0\]:hover {
+  background-color: #2F172B !important;
+}
+
 /* Borders & Dividers */
 .dark .border-\[\#F0DCE8\],
+.dark .border-\[\#F0DDE8\],
 .dark .border-\[\#EDE3E9\],
-.dark .border-\[\#F5D8E7\],
 .dark .border-\[\#EEDCE7\],
-.dark .border-\[\#ECCEDF\],
-.dark .border-\[\#F3B8D3\],
+.dark .border-\[\#F5D8E7\],
+.dark .border-\[\#F5E6EE\],
+.dark .border-\[\#F8EDF3\],
 .dark .border-\[\#F9EAF2\],
+.dark .border-\[\#F1CFE0\],
+.dark .border-\[\#F2B8D2\],
+.dark .border-\[\#F2D9E6\],
+.dark .border-\[\#F3B8D3\],
+.dark .border-\[\#F3E5ED\],
+.dark .border-\[\#E8C9DA\],
+.dark .border-\[\#E8D5E1\],
+.dark .border-\[\#EBCBDD\],
+.dark .border-\[\#ECCEDF\],
 .dark .border-\[\#FBEAF4\] {
   border-color: #331D2F !important;
 }
@@ -148,33 +185,78 @@ body {
   border-color: #331D2F !important;
 }
 
-/* Typography */
+/* Ring outline on badge/header elements */
+.dark .ring-white {
+  --tw-ring-color: #1A1119 !important;
+}
+
+/* Typography — Headings & Primary Text */
 .dark .text-\[\#59234F\],
 .dark .text-\[\#3D1437\],
 .dark .text-\[\#501D45\],
 .dark .text-\[\#42163B\],
 .dark .text-\[\#1E161C\],
-.dark .text-\[\#541A45\],
 .dark .text-\[\#542044\],
-.dark .text-\[\#2E1029\],
-.dark .text-\[\#6B2858\] {
+.dark .text-\[\#572047\],
+.dark .text-\[\#5B1F4B\],
+.dark .text-\[\#5C3B53\],
+.dark .text-\[\#4C3447\],
+.dark .text-\[\#2E1029\] {
   color: #F5EEF3 !important;
 }
 
+/* Typography — Secondary & Muted Labels */
 .dark .text-\[\#81506F\],
 .dark .text-\[\#685664\],
-.dark .text-\[\#A78A9D\],
-.dark .text-\[\#B596AA\],
+.dark .text-\[\#6B2858\],
+.dark .text-\[\#70295F\],
+.dark .text-\[\#70415F\],
+.dark .text-\[\#8A7182\],
+.dark .text-\[\#8B6B82\],
 .dark .text-\[\#8E7E8B\],
-.dark .text-\[\#7B4E6B\] {
+.dark .text-\[\#A78A9D\],
+.dark .text-\[\#AFA1AC\],
+.dark .text-\[\#B596AA\],
+.dark .text-\[\#B99EAF\] {
   color: #BDA9B8 !important;
 }
 
+/* Typography — Brand Accent Colors (Rose / Pink) */
 .dark .text-\[\#BD4564\],
 .dark .text-\[\#D45D79\],
 .dark .text-\[\#D94383\],
-.dark .text-\[\#B52D78\] {
+.dark .text-\[\#D95A91\],
+.dark .text-\[\#D85A93\],
+.dark .text-\[\#B52D78\],
+.dark .text-\[\#8B3569\],
+.dark .text-\[\#A04478\],
+.dark .text-\[\#A83E75\],
+.dark .text-\[\#E27B94\] {
   color: #F285A0 !important;
+}
+
+/* =========================================================
+   PROTECTED UI ELEMENTS (EXCEPTIONS)
+   ========================================================= */
+
+/* 1. Sidebar Nav Active Item (Pertahankan teks kontras di atas gradient pink) */
+.dark aside button[aria-current="page"],
+.dark aside .bg-gradient-to-r {
+  color: #541A45 !important;
+}
+.dark aside button[aria-current="page"] svg,
+.dark aside .bg-gradient-to-r svg {
+  color: #541A45 !important;
+}
+
+/* 2. Logo Sekolah di dalam Sidebar (Tetap bersih & terang) */
+.dark aside .bg-white {
+  background-color: #FFFFFF !important;
+}
+
+/* 3. Elemen dengan teks putih asli (tombol CTA, badge aktif, dll) */
+.dark .text-white {
+  color: #FFFFFF !important;
 }
 
 /* Forms, Inputs & Textareas */
@@ -189,7 +271,9 @@ body {
 .dark input:focus,
 .dark textarea:focus,
 .dark select:focus {
+  background-color: #180E17 !important;
   border-color: #E46E89 !important;
+  outline: none !important;
 }
 
 .dark input::placeholder,
@@ -199,7 +283,7 @@ body {
 
 /* Table rows */
 .dark th {
-  background-color: #221420 !important;
+  background-color: #211320 !important;
   color: #F5EEF3 !important;
 }
 
@@ -225,4 +309,50 @@ body {
 
 .dark .from-\[\#F4E3EC\] {
   --tw-gradient-from: rgba(80, 29, 69, 0.28) !important;
+}
+
+/* =========================================================
+   HERO BANNER GRADIENTS (SISWA, GURU & ADMIN DASHBOARDS)
+   ========================================================= */
+
+.dark .from-\[\#FCE5F0\],
+.dark .from-\[\#FCEAF2\],
+.dark .from-\[\#FCF0F6\] {
+  --tw-gradient-from: #3D1635 !important;
+}
+
+.dark .via-\[\#F8D8E8\],
+.dark .via-\[\#F7DCE9\] {
+  --tw-gradient-via: #2E1128 !important;
+}
+
+.dark .to-\[\#E9BBD4\],
+.dark .to-\[\#E7B0CD\],
+.dark .to-\[\#F8E4EF\] {
+  --tw-gradient-to: #210A1C !important;
+}
+
+.dark .border-\[\#F1CFE0\],
+.dark .border-\[\#EBCBDD\],
+.dark .border-\[\#F2D9E6\] {
+  border-color: #4A1E40 !important;
+}
+
+/* Chip/Pill info di dalam Hero Banner */
+.dark .bg-white\/75 {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #F5EEF3 !important;
+}
+
+/* Ilustrasi gedung sekolah di latar Hero Banner agar menyatu lembut di malam hari */
+.dark svg path[fill="#F9F0F5"],
+.dark svg path[fill="#F9EAF2"],
+.dark svg circle[fill="#F9EAF2"] {
+  fill: #33152B !important;
+  opacity: 0.7 !important;
+}
+
+.dark svg path[stroke="#B66C98"],
+.dark svg path[stroke="#9C4D7D"] {
+  stroke: #7B3564 !important;
 }

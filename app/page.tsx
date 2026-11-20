@@ -246,7 +246,7 @@ export default function Home() {
                   LMS
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-[#685664]">
+              <span className="hidden sm:inline text-[11px] font-medium text-[#685664]">
                 Portal Pembelajaran Digital Vokasi
               </span>
             </div>
@@ -287,21 +287,25 @@ export default function Home() {
           </nav>
 
           {/* Action Button & Mobile Hamburger */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <ThemeToggle compact />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle
+              rounded="xl"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-[#EDE3E9] dark:border-[#331D2F] bg-white dark:bg-[#1A1119] shadow-xs"
+            />
 
             <Link
               href="/login"
-              className="group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#501D45] px-5 text-xs font-bold text-white shadow-[0_4px_14px_rgba(80,29,69,0.20)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#3B1333] hover:shadow-[0_6px_18px_rgba(80,29,69,0.26)] sm:text-sm"
+              className="group inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-[#501D45] px-3 sm:px-5 text-xs font-bold text-white shadow-[0_4px_14px_rgba(80,29,69,0.20)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#3B1333] hover:shadow-[0_6px_18px_rgba(80,29,69,0.26)] sm:text-sm shrink-0"
             >
-              <span>Masuk ke LMS</span>
-              <ChevronRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+              <span>Masuk</span>
+              <span className="hidden sm:inline"> ke LMS</span>
+              <ChevronRightIcon className="hidden sm:inline h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
 
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#EDE3E9] bg-white text-[#501D45] shadow-xs hover:bg-[#FAF7F9] transition lg:hidden"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-[#EDE3E9] bg-white text-[#501D45] shadow-xs hover:bg-[#FAF7F9] transition lg:hidden"
               aria-label="Buka menu navigasi"
               aria-expanded={mobileMenuOpen}
             >

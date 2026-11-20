@@ -575,7 +575,7 @@ export default function GuruDashboard() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
-            <ThemeToggle compact />
+            <ThemeToggle />
 
             <div className="relative">
               <button
