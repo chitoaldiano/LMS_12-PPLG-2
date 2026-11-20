@@ -21,10 +21,11 @@ export async function DELETE(request: Request, { params }: Params) {
     }
 
     return Response.json({ success: true, message: "Pengumuman berhasil dihapus" });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan pada server";
     console.error(error);
     return Response.json(
-      { success: false, message: error.message },
+      { success: false, message },
       { status: 500 }
     );
   }

@@ -9,21 +9,12 @@
 
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    "Tolong isi MONGODB_URI di file .env.local. Contoh: mongodb://127.0.0.1:27017/lms_db"
-  );
-}
-
 interface MongooseCache {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var _mongooseCache: MongooseCache | undefined;
 }
 
@@ -35,6 +26,14 @@ if (!cached) {
 }
 
 async function connectDB() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+
+  if (!MONGODB_URI) {
+    throw new Error(
+      "Tolong isi MONGODB_URI di environment variables (lokal di .env.local atau di Vercel Settings)."
+    );
+  }
+
   // Kalau sudah pernah connect, pakai koneksi yang sama (jangan connect lagi)
   if (cached!.conn) {
     return cached!.conn;
@@ -46,7 +45,7 @@ async function connectDB() {
     };
 
     cached!.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      console.log("✅ MongoDB terkoneksi:", MONGODB_URI);
+      console.log("✅ MongoDB berhasil terkoneksi");
       return mongooseInstance;
     });
   }

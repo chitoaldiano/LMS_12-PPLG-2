@@ -13,15 +13,23 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const target = searchParams.get("target");
 
-    const filter = target ? { target: { $in: ["semua", target] } } : {};
+    const targets: ("semua" | "guru" | "siswa")[] =
+      target === "guru" || target === "siswa"
+        ? ["semua", target]
+        : ["semua"];
+
+    const filter = target
+      ? { target: { $in: targets } }
+      : {};
 
     const daftar = await Pengumuman.find(filter).sort({ createdAt: -1 });
 
     return Response.json({ success: true, data: daftar });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan pada server";
     console.error(error);
     return Response.json(
-      { success: false, message: error.message },
+      { success: false, message },
       { status: 500 }
     );
   }
@@ -44,10 +52,11 @@ export async function POST(request: Request) {
     const baru = await Pengumuman.create({ judul, isi, target, prioritas, pembuat });
 
     return Response.json({ success: true, data: baru }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan pada input";
     console.error(error);
     return Response.json(
-      { success: false, message: error.message },
+      { success: false, message },
       { status: 400 }
     );
   }

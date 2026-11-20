@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Box, Kosong, StatCard, ambilData } from "./DashboardShell";
 
 const selectCls =
-  "w-full px-3 py-2 rounded-lg border border-[#D8D3C8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#C6992F]";
+  "w-full px-3 py-2 rounded-xl border border-[#E8D5E1] bg-white text-sm text-[#59234F] focus:outline-none focus:ring-2 focus:ring-[#D94383] transition";
 
 const JENIS_LABEL: Record<string, string> = {
   tugas: "Tugas",
@@ -96,44 +96,44 @@ export function RekapNilai({ bolehUnduh = false }: { bolehUnduh?: boolean }) {
             <button
               onClick={unduhCsv}
               disabled={n === 0}
-              className="px-4 py-2 rounded-lg bg-[#0F1B33] text-white text-sm font-medium hover:bg-[#C6992F] hover:text-[#0F1B33] transition disabled:opacity-40"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#70295F] to-[#913B7E] text-white text-sm font-semibold shadow-sm hover:from-[#5E2250] hover:to-[#7E326D] transition disabled:opacity-40"
             >
               Unduh CSV ({n})
             </button>
           ) : undefined
         }
       >
-        <div className="px-6 py-4 border-b border-[#E5E0D5] bg-[#FAF8F3] grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="px-6 py-4 border-b border-[#F0DCE8] bg-[#FFF9FC] grid grid-cols-2 md:grid-cols-5 gap-3">
           <div>
-            <label className="block text-[11px] font-medium text-[#6B7280] mb-1">Kelas</label>
+            <label className="block text-[11px] font-semibold text-[#81506F] mb-1">Kelas</label>
             <select value={f.kelas} onChange={(e) => setF({ ...f, kelas: e.target.value })} className={selectCls}>
               <option value="">Semua</option>
               {opsiKelas.map((x) => <option key={x} value={x}>{x}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-[#6B7280] mb-1">Mata Pelajaran</label>
+            <label className="block text-[11px] font-semibold text-[#81506F] mb-1">Mata Pelajaran</label>
             <select value={f.mapel} onChange={(e) => setF({ ...f, mapel: e.target.value })} className={selectCls}>
               <option value="">Semua</option>
               {opsiMapel.map((x) => <option key={x} value={x}>{x}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-[#6B7280] mb-1">Guru</label>
+            <label className="block text-[11px] font-semibold text-[#81506F] mb-1">Guru</label>
             <select value={f.guru} onChange={(e) => setF({ ...f, guru: e.target.value })} className={selectCls}>
               <option value="">Semua</option>
               {opsiGuru.map(([id, nama]) => <option key={id} value={id}>{nama}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-[#6B7280] mb-1">Jurusan</label>
+            <label className="block text-[11px] font-semibold text-[#81506F] mb-1">Jurusan</label>
             <select value={f.jurusan} onChange={(e) => setF({ ...f, jurusan: e.target.value })} className={selectCls}>
               <option value="">Semua</option>
               {opsiJurusan.map((x) => <option key={x} value={x}>{x}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-[#6B7280] mb-1">Jenis</label>
+            <label className="block text-[11px] font-semibold text-[#81506F] mb-1">Jenis</label>
             <select value={f.jenis} onChange={(e) => setF({ ...f, jenis: e.target.value })} className={selectCls}>
               <option value="">Semua</option>
               {Object.entries(JENIS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -141,11 +141,11 @@ export function RekapNilai({ bolehUnduh = false }: { bolehUnduh?: boolean }) {
           </div>
         </div>
 
-        <div className="px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-b border-[#E5E0D5]">
-          <StatCard label="Jumlah data" value={n} />
-          <StatCard label="Rata-rata" value={rata} />
-          <StatCard label="Tertinggi" value={tertinggi} />
-          <StatCard label="Terendah" value={terendah} />
+        <div className="px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-b border-[#F0DCE8] bg-white">
+          <StatCard label="Jumlah data" value={n} icon="laporan" />
+          <StatCard label="Rata-rata" value={rata} icon="nilai" />
+          <StatCard label="Tertinggi" value={tertinggi} icon="nilai" />
+          <StatCard label="Terendah" value={terendah} icon="nilai" />
         </div>
 
         {loading ? (
@@ -156,34 +156,34 @@ export function RekapNilai({ bolehUnduh = false }: { bolehUnduh?: boolean }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[#9CA3AF] border-b border-[#E5E0D5]">
-                  <th className="px-6 py-3 font-medium">Siswa</th>
-                  <th className="px-4 py-3 font-medium">Kelas</th>
-                  <th className="px-4 py-3 font-medium">Mapel</th>
-                  <th className="px-4 py-3 font-medium">Guru</th>
-                  <th className="px-4 py-3 font-medium">Jenis</th>
-                  <th className="px-4 py-3 font-medium">Judul</th>
-                  <th className="px-4 py-3 font-medium text-right">Nilai</th>
-                  <th className="px-6 py-3 font-medium">Tanggal</th>
+                <tr className="text-left text-[#70295F] bg-[#FFF7FB] border-b border-[#F0DCE8]">
+                  <th className="px-6 py-3.5 font-bold text-xs uppercase tracking-wider">Siswa</th>
+                  <th className="px-4 py-3.5 font-bold text-xs uppercase tracking-wider">Kelas</th>
+                  <th className="px-4 py-3.5 font-bold text-xs uppercase tracking-wider">Mapel</th>
+                  <th className="px-4 py-3.5 font-bold text-xs uppercase tracking-wider">Guru</th>
+                  <th className="px-4 py-3.5 font-bold text-xs uppercase tracking-wider">Jenis</th>
+                  <th className="px-4 py-3.5 font-bold text-xs uppercase tracking-wider">Judul</th>
+                  <th className="px-4 py-3.5 font-bold text-xs uppercase tracking-wider text-right">Nilai</th>
+                  <th className="px-6 py-3.5 font-bold text-xs uppercase tracking-wider">Tanggal</th>
                 </tr>
               </thead>
               <tbody>
                 {tampil.slice(0, BATAS).map((r) => (
-                  <tr key={r.id} className="border-b border-[#F0EDE3] last:border-0">
-                    <td className="px-6 py-3 text-[#1F2430] font-medium">{r.siswa}</td>
-                    <td className="px-4 py-3 text-[#6B7280]">{r.kelas}</td>
-                    <td className="px-4 py-3 text-[#6B7280]">{r.mataPelajaran}</td>
-                    <td className="px-4 py-3 text-[#6B7280]">{r.guru}</td>
-                    <td className="px-4 py-3 text-[#6B7280]">{JENIS_LABEL[r.jenis] || r.jenis}</td>
-                    <td className="px-4 py-3 text-[#6B7280]">{r.judul || "-"}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-[#0F1B33]">{r.nilai}</td>
-                    <td className="px-6 py-3 text-[#6B7280] whitespace-nowrap">{fmtTanggal(r.tanggal)}</td>
+                  <tr key={r.id} className="border-b border-[#F9EAF2] last:border-0 hover:bg-[#FFF7FB] transition">
+                    <td className="px-6 py-3.5 text-[#59234F] font-semibold">{r.siswa}</td>
+                    <td className="px-4 py-3.5 text-[#81506F]">{r.kelas}</td>
+                    <td className="px-4 py-3.5 text-[#81506F]">{r.mataPelajaran}</td>
+                    <td className="px-4 py-3.5 text-[#81506F]">{r.guru}</td>
+                    <td className="px-4 py-3.5 text-[#81506F]">{JENIS_LABEL[r.jenis] || r.jenis}</td>
+                    <td className="px-4 py-3.5 text-[#81506F]">{r.judul || "-"}</td>
+                    <td className="px-4 py-3.5 text-right font-bold text-[#59234F]">{r.nilai}</td>
+                    <td className="px-6 py-3.5 text-[#B596AA] whitespace-nowrap">{fmtTanggal(r.tanggal)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {n > BATAS && (
-              <p className="px-6 py-3 text-xs text-[#9CA3AF]">
+              <p className="px-6 py-3 text-xs text-[#B596AA] border-t border-[#F0DCE8]">
                 Menampilkan {BATAS} dari {n} data. Persempit dengan filter{bolehUnduh ? ", atau unduh CSV untuk data lengkap" : ""}.
               </p>
             )}
@@ -222,7 +222,7 @@ export function GuruPerKelas() {
           </select>
         }
       >
-        <p className="px-6 py-3 text-xs text-[#9CA3AF] border-b border-[#E5E0D5]">
+        <p className="px-6 py-3 text-xs text-[#81506F] border-b border-[#F0DCE8] bg-[#FFF9FC]">
           Daftar guru dihitung otomatis dari guru yang pernah membuat materi, tugas, kuis, atau nilai untuk kelas tersebut.
         </p>
         {loading ? (
@@ -231,32 +231,32 @@ export function GuruPerKelas() {
           <Kosong text="Belum ada kelas. Admin bisa menambahkannya di menu Kelas." />
         ) : (
           tampil.map((k) => (
-            <div key={k._id} className="px-6 py-5 border-b border-[#F0EDE3] last:border-0">
+            <div key={k._id} className="px-6 py-5 border-b border-[#F9EAF2] last:border-0 hover:bg-[#FFF7FB]/40 transition">
               <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
                 <div>
-                  <p className="font-semibold text-[#0F1B33]">{k.kelas}</p>
-                  <p className="text-xs text-[#9CA3AF] mt-0.5">
+                  <p className="font-bold text-[#59234F] text-base">{k.kelas}</p>
+                  <p className="text-xs text-[#81506F] mt-0.5">
                     Tingkat {k.tingkat} &middot; {k.jurusan} &middot; Wali kelas: {k.waliKelas || "-"}
                   </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-[#F5F3EE] text-[#0F1B33] text-xs font-medium">
+                <span className="px-3 py-1 rounded-full bg-[#FCE4F0] text-[#70295F] text-xs font-semibold">
                   {k.jumlahSiswa} siswa
                 </span>
               </div>
 
               {k.guru.length === 0 ? (
-                <p className="text-xs text-[#9CA3AF]">Belum ada guru yang tercatat mengajar di kelas ini.</p>
+                <p className="text-xs text-[#B596AA]">Belum ada guru yang tercatat mengajar di kelas ini.</p>
               ) : (
                 <div className="space-y-2">
                   {k.guru.map((g: any) => (
-                    <div key={g._id} className="flex items-center justify-between gap-3 flex-wrap">
-                      <p className="text-sm text-[#1F2430] font-medium">{g.nama}</p>
+                    <div key={g._id} className="flex items-center justify-between gap-3 flex-wrap py-1.5 px-3 rounded-xl bg-white border border-[#F5E6EE]">
+                      <p className="text-sm text-[#59234F] font-semibold">{g.nama}</p>
                       <div className="flex gap-1.5 flex-wrap">
                         {g.mataPelajaran.length === 0 ? (
-                          <span className="text-xs text-[#9CA3AF]">-</span>
+                          <span className="text-xs text-[#B596AA]">-</span>
                         ) : (
                           g.mataPelajaran.map((m: string) => (
-                            <span key={m} className="px-2 py-0.5 rounded-full bg-[#FAF3DF] text-[#8A6A1E] text-[11px] font-medium">
+                            <span key={m} className="px-2.5 py-0.5 rounded-full bg-[#FCEAF3] text-[#70295F] border border-[#F5D8E7] text-[11px] font-semibold">
                               {m}
                             </span>
                           ))
