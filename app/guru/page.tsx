@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 import type {
   UserItem,
   MateriItem,
@@ -573,7 +574,9 @@ export default function GuruDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 ml-auto">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+            <ThemeToggle compact />
+
             <div className="relative">
               <button
                 onClick={() => setBellOpen((v) => !v)}

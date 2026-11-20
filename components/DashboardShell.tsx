@@ -6,6 +6,7 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "./ThemeToggle";
 
 const PATHS: Record<string, string> = {
   beranda: "M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5Z",
@@ -253,7 +254,9 @@ export default function DashboardShell({
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 ml-auto">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+            <ThemeToggle compact />
+
             <div className="relative">
               <button
                 onClick={() => setShowNotif((v) => !v)}

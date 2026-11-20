@@ -3,6 +3,7 @@
 import { useEffect, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ThemeToggle from "@/components/ThemeToggle";
 import MapelPilih from "@/components/MapelPilih";
 import { RekapNilai, GuruPerKelas } from "@/components/Laporan";
 import type {
@@ -874,12 +875,15 @@ export default function AdminDashboard() {
               </svg>
             </button>
             <span className="font-bold text-sm text-[#542044] truncate">Panel Administrator</span>
-            <button
-              onClick={handleLogout}
-              className="text-xs font-semibold text-red-600 px-2.5 py-1.5 rounded-lg border border-red-200 bg-white"
-            >
-              Keluar
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle compact />
+              <button
+                onClick={handleLogout}
+                className="text-xs font-semibold text-red-600 px-2.5 py-1.5 rounded-lg border border-red-200 bg-white"
+              >
+                Keluar
+              </button>
+            </div>
           </div>
           {/* Desktop topbar */}
           <div className="hidden md:flex h-[72px] items-center justify-between gap-4 px-6 xl:px-8">
@@ -889,6 +893,7 @@ export default function AdminDashboard() {
               </span>
             </div>
             <div className="flex items-center gap-3">
+              <ThemeToggle compact />
               <div className="hidden sm:flex items-center gap-3 bg-white border border-[#EEDCE7] rounded-full px-4 py-2.5 w-full max-w-[300px] shadow-[0_3px_15px_rgba(91,31,75,0.04)]">
                 <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>

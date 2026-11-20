@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type SVGProps } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const FITUR = [
   {
@@ -286,7 +287,9 @@ export default function Home() {
           </nav>
 
           {/* Action Button & Mobile Hamburger */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <ThemeToggle compact />
+
             <Link
               href="/login"
               className="group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#501D45] px-5 text-xs font-bold text-white shadow-[0_4px_14px_rgba(80,29,69,0.20)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#3B1333] hover:shadow-[0_6px_18px_rgba(80,29,69,0.26)] sm:text-sm"

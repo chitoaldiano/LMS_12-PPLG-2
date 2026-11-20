@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 import type {
   UserItem,
   MateriItem,
@@ -493,7 +494,9 @@ export default function SiswaDashboard() {
             <span className="font-bold text-sm text-[#59234F] truncate md:hidden">SMK Citra Negara</span>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 ml-auto">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+            <ThemeToggle compact />
+
             <div className="relative">
               <button
                 onClick={() => { setBellOpen((v) => !v); setBellExpand(false); }}

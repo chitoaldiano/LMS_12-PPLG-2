@@ -35,6 +35,7 @@ export async function POST(request: Request) {
         { email: idLower },
       ],
     });
+    console.log("USER FOUND:", !!user);
 
     if (!user) {
       // Sengaja pesannya digeneralisir (bukan "akun tidak ditemukan")
