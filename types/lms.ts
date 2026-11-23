@@ -114,6 +114,8 @@ export interface SoalItem {
   pertanyaan: string;
   pilihan: string[];
   jawabanBenar?: number;
+  poinBenar?: number;
+  poinSalah?: number;
   jawabanSaya?: number | null;
 }
 
@@ -121,6 +123,11 @@ export interface AttemptItem {
   siswa: SiswaPopulated | string;
   jawaban: number[];
   skor: number;
+  poin?: number;
+  poinMaks?: number;
+  benar?: number;
+  salah?: number;
+  kosong?: number;
   waktuSelesai: string | Date;
 }
 
@@ -135,6 +142,7 @@ export interface KuisItem {
   soal: SoalItem[];
   attempts?: AttemptItem[];
   attemptSaya?: AttemptItem | null;
+  sudahDikerjakan?: boolean;
   jumlahSoal?: number;
   status?: "aktif" | "nonaktif";
   createdAt?: string;

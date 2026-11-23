@@ -102,9 +102,6 @@ interface KuisAktifState extends KuisItem {
 }
 
 interface HasilKuisState {
-  skor: number;
-  benar?: number;
-  total?: number;
   selesai: boolean;
   otomatis?: boolean;
 }
@@ -178,25 +175,28 @@ export default function SiswaDashboard() {
       j<PengumumanItem>("/api/pengumuman?target=siswa"),
       j<KuisItem>(`/api/kuis?kelas=${k}&siswa=${u._id}`),
     ]);
-    setMateri(m); setTugas(t); setNilai(n); setPengumuman(p); setKuisList(q);
+    setMateri(m);
+    setTugas(t);
+    // Kerahasiaan Nilai: Tab Nilai dan Beranda siswa tidak memuat nilai kuis
+    setNilai(n.filter((item) => item.jenis !== "kuis"));
+    setPengumuman(p);
+    setKuisList(q);
     setLoading(false);
   }
 
-  // Mulai kerjakan kuis, atau langsung tampilkan hasil kalau sudah pernah dikerjakan
+  // Mulai kerjakan kuis (kuis yang sudah dikerjakan tidak bisa dibuka lagi)
   async function mulaiKuis(k: KuisItem) {
     if (!user) return;
+    if (k.sudahDikerjakan) return;
+
     const res = await fetch(`/api/kuis/${k._id}?siswa=${user._id}`);
     const r = await res.json();
     if (!r.success) return;
     const d = r.data;
 
+    // Jika server menyatakan sudah dikerjakan, jangan buka lembar soal
     if (d.sudahDikerjakan) {
-      setHasilKuis({ skor: d.skor, selesai: true });
-      setSisaDetik(null);
-      setKuisAktif({
-        ...d,
-        jawabanSaya: d.soal.map((s: { jawabanSaya?: number | null }) => (s.jawabanSaya != null ? s.jawabanSaya : null)),
-      });
+      muat(user);
       return;
     }
 
@@ -216,27 +216,42 @@ export default function SiswaDashboard() {
       jawabanSaya[i] = idx;
       return { ...prev, jawabanSaya };
     });
+    // Hapus pesan peringatan jika sebelumnya muncul
+    setPesan((prev) => ({ ...prev, kuis: "" }));
   }
 
   async function kumpulkanKuis(otomatis = false) {
     if (!kuisAktif || hasilKuis?.selesai || !user) return;
+
+    // Validasi pengerjaan manual: kuis belum boleh dikumpulkan jika belum semua soal dijawab
+    if (!otomatis) {
+      const belumDijawab = kuisAktif.jawabanSaya
+        .map((j, idx) => (j == null || j === -1 ? idx + 1 : null))
+        .filter((idx): idx is number => idx !== null);
+
+      if (belumDijawab.length > 0) {
+        const daftarNomor =
+          belumDijawab.slice(0, 8).join(", ") +
+          (belumDijawab.length > 8 ? ` dan ${belumDijawab.length - 8} soal lainnya` : "");
+        setPesan((prev) => ({
+          ...prev,
+          kuis: `Jawaban belum siap dikumpulkan karena kamu belum selesai mengerjakan kuis! Masih ada ${belumDijawab.length} soal yang belum dijawab (Nomor: ${daftarNomor}). Harap selesaikan seluruh soal terlebih dahulu.`,
+        }));
+        return;
+      }
+    }
+
     const jawaban = kuisAktif.jawabanSaya.map((j) => (j == null ? -1 : j));
     const res = await fetch(`/api/kuis/${kuisAktif._id}/kumpul`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ siswaId: user._id, jawaban }),
+      body: JSON.stringify({ siswaId: user._id, jawaban, otomatis }),
     });
     const r = await res.json();
 
     if (r.success) {
-      setHasilKuis({ ...r.data, selesai: true, otomatis });
-      setKuisAktif((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          soal: prev.soal.map((s, i) => ({ ...s, jawabanBenar: r.data.pembahasan[i] })),
-        };
-      });
+      // Nilai dirahasiakan: hanya set selesai tanpa memuat skor, poin, benar, atau pembahasan
+      setHasilKuis({ selesai: true, otomatis });
       muat(user);
     } else {
       setPesan((prev) => ({ ...prev, kuis: r.message }));
@@ -383,7 +398,7 @@ export default function SiswaDashboard() {
     .sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime());
 
   const belum = tugas.filter((t) => !t.pengumpulan).length;
-  const kuisBelum = kuisList.filter((k) => !k.attemptSaya).length;
+  const kuisBelum = kuisList.filter((k) => !k.sudahDikerjakan).length;
   const rata = nilai.length ? Math.round(nilai.reduce((a, n) => a + n.nilai, 0) / nilai.length) : "-";
   const stats = [
     ["Materi", materi.length],
@@ -392,6 +407,15 @@ export default function SiswaDashboard() {
     ["Rata-rata nilai", rata],
     ["Pengumuman", pengumuman.length],
   ];
+
+  // Status kelengkapan jawaban kuis aktif
+  const kuisAktifBelumDijawab = kuisAktif
+    ? kuisAktif.jawabanSaya
+        .map((j, idx) => (j == null || j === -1 ? idx + 1 : null))
+        .filter((idx): idx is number => idx !== null)
+    : [];
+  const kuisAktifTerjawab = kuisAktif ? kuisAktif.soal.length - kuisAktifBelumDijawab.length : 0;
+  const kuisAktifSiapKumpul = kuisAktif ? kuisAktifBelumDijawab.length === 0 : false;
 
   return (
     <div className="flex h-dvh min-h-0 w-full overflow-hidden bg-[#FFF7FB] text-[#59234F]">
@@ -746,85 +770,142 @@ export default function SiswaDashboard() {
 
         {nav === "kuis" && (
           kuisAktif ? (
-            <div className="bg-white rounded-2xl border border-[#F0DCE8] shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-[#F0DCE8] flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="font-semibold text-[#59234F]">{kuisAktif.judul}</h2>
-                  <p className="text-xs text-[#B596AA] mt-0.5">
-                    {kuisAktif.mataPelajaran} &middot; {typeof kuisAktif.guru === "object" && kuisAktif.guru !== null ? (kuisAktif.guru as GuruPopulated).nama : "Guru"}
-                  </p>
+            hasilKuis?.selesai ? (
+              /* Layar Konfirmasi Selesai Mengerjakan (RAHASIA: Tanpa Nilai, Skor, Poin, atau Pembahasan) */
+              <div className="bg-white rounded-2xl border border-[#F0DCE8] shadow-sm overflow-hidden p-8 sm:p-12 text-center max-w-xl mx-auto my-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
                 </div>
-                {!hasilKuis?.selesai && sisaDetik != null && (
-                  <span className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${sisaDetik < 60 ? "bg-red-50 text-red-600" : "bg-[#FFF7FB] text-[#59234F]"}`}>
-                    Sisa waktu: {fmtWaktu(sisaDetik)}
-                  </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#59234F]">Jawabanmu sudah terkirim.</h2>
+                <p className="text-sm sm:text-base text-[#81506F] mt-2">Nilai akan diberikan oleh gurumu.</p>
+                {hasilKuis.otomatis && (
+                  <p className="text-xs text-[#B596AA] mt-2 italic">
+                    Waktu pengerjaan telah habis dan lembar jawabanmu otomatis terkirim.
+                  </p>
                 )}
-              </div>
-
-              {hasilKuis?.selesai && (
-                <div className="px-6 py-4 bg-[#FFF7FB] border-b border-[#F0DCE8]">
-                  <p className="font-semibold text-[#59234F]">
-                    Skor kamu: {hasilKuis.skor}
-                    {hasilKuis.benar != null && ` (${hasilKuis.benar}/${hasilKuis.total} benar)`}
-                  </p>
-                  {hasilKuis.otomatis && (
-                    <p className="text-xs text-[#8B6B82] mt-1">Waktu habis, jawaban terkirim otomatis.</p>
-                  )}
+                <div className="mt-8">
+                  <button
+                    onClick={tutupKuis}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#70295F] to-[#913B7E] text-white text-sm font-semibold shadow-sm hover:from-[#5E2250] hover:to-[#7E326D] transition"
+                  >
+                    Kembali ke Daftar Kuis
+                  </button>
                 </div>
-              )}
-
-              <div className="px-6 py-5 space-y-6">
-                {kuisAktif.soal.map((s, i: number) => (
-                  <div key={i}>
-                    <p className="font-medium text-[#59234F] mb-2">
-                      {i + 1}. {s.pertanyaan}
+              </div>
+            ) : (
+              /* Lembar Pengerjaan Soal Kuis */
+              <div className="bg-white rounded-2xl border border-[#F0DCE8] shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-[#F0DCE8] flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 className="font-semibold text-[#59234F]">{kuisAktif.judul}</h2>
+                    <p className="text-xs text-[#B596AA] mt-0.5">
+                      {kuisAktif.mataPelajaran} &middot; {typeof kuisAktif.guru === "object" && kuisAktif.guru !== null ? (kuisAktif.guru as GuruPopulated).nama : "Guru"}
                     </p>
-                    <div className="space-y-1.5">
-                      {s.pilihan.map((opsi: string, idx: number) => {
-                        const terpilih = kuisAktif.jawabanSaya[i] === idx;
-                        const sudahSelesai = !!hasilKuis?.selesai;
-                        const benar = sudahSelesai && s.jawabanBenar === idx;
-                        const salahDipilih = sudahSelesai && terpilih && s.jawabanBenar !== idx;
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => pilihJawabanKuis(i, idx)}
-                            disabled={sudahSelesai}
-                            className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition ${
-                              benar
-                                ? "border-green-300 bg-green-50 text-green-700"
-                                : salahDipilih
-                                ? "border-red-300 bg-red-50 text-red-600"
-                                : terpilih
-                                ? "border-[#D85A93] bg-[#FFF7FB] text-[#59234F]"
-                                : "border-[#F0DCE8] text-[#59234F] hover:bg-[#FFF7FB]"
-                            }`}
-                          >
-                            {opsi}
-                          </button>
-                        );
-                      })}
+                  </div>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="px-3 py-1.5 rounded-xl bg-[#FCE4F0] text-[#70295F] text-xs font-bold">
+                      {kuisAktifTerjawab} / {kuisAktif.soal.length} Terjawab
+                    </span>
+                    {kuisAktifSiapKumpul ? (
+                      <span className="px-3 py-1.5 rounded-xl bg-green-50 text-green-700 border border-green-200 text-xs font-bold">
+                        ✓ Siap Dikumpulkan
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
+                        {kuisAktifBelumDijawab.length} Soal Belum Dijawab
+                      </span>
+                    )}
+                    {sisaDetik != null && (
+                      <span className={`px-3 py-1.5 rounded-xl text-sm font-semibold ${sisaDetik < 60 ? "bg-red-50 text-red-600 animate-pulse" : "bg-[#FFF7FB] text-[#59234F]"}`}>
+                        Sisa waktu: {fmtWaktu(sisaDetik)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-6 py-5 space-y-6">
+                  {kuisAktif.soal.map((s, i: number) => {
+                    const sudahDijawab = kuisAktif.jawabanSaya[i] != null && kuisAktif.jawabanSaya[i] !== -1;
+                    return (
+                      <div key={i} className="border-b border-[#F9EAF2] pb-5 last:border-0 last:pb-0">
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <p className="font-medium text-[#59234F]">
+                            {i + 1}. {s.pertanyaan}
+                          </p>
+                          {!sudahDijawab && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 shrink-0">
+                              Belum dijawab
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-2 pl-2">
+                          {s.pilihan.map((opsi: string, idx: number) => {
+                            const terpilih = kuisAktif.jawabanSaya[i] === idx;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => pilihJawabanKuis(i, idx)}
+                                className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-sm transition flex items-center gap-2.5 ${
+                                  terpilih
+                                    ? "border-[#70295F] bg-[#FCE4F0] text-[#70295F] font-semibold shadow-xs"
+                                    : "border-[#F0DCE8] text-[#59234F] hover:bg-[#FFF7FB]"
+                                }`}
+                              >
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                                  terpilih ? "bg-[#70295F] text-white" : "bg-[#F0DCE8] text-[#70295F]"
+                                }`}>
+                                  {String.fromCharCode(65 + idx)}
+                                </span>
+                                <span>{opsi}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Banner Peringatan jika belum selesai dikerjakan saat mencoba mengumpulkan */}
+                {pesan.kuis && (
+                  <div className="mx-6 mb-4 p-4 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-900 flex items-start gap-3 shadow-xs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-amber-600 shrink-0 mt-0.5">
+                      <path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="font-bold text-sm text-amber-800">Jawaban Belum Siap Dikumpulkan</p>
+                      <p className="mt-1 leading-relaxed text-amber-700">{pesan.kuis}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {pesan.kuis && <p className="px-6 text-xs text-red-600">{pesan.kuis}</p>}
-
-              <div className="px-6 py-4 border-t border-[#F0DCE8] flex gap-3">
-                <button onClick={tutupKuis} className="px-4 py-2 rounded-lg border border-[#E8C9DA] text-sm font-medium text-[#59234F]">
-                  {hasilKuis?.selesai ? "Kembali ke daftar" : "Batal"}
-                </button>
-                {!hasilKuis?.selesai && (
-                  <button
-                    onClick={() => kumpulkanKuis(false)}
-                    className="px-4 py-2 rounded-lg bg-[#59234F] text-white text-sm font-medium hover:bg-[#D85A93] hover:text-[#59234F] transition"
-                  >
-                    Kumpulkan Jawaban
-                  </button>
                 )}
+
+                <div className="px-6 py-4 border-t border-[#F0DCE8] flex items-center justify-between gap-3 flex-wrap">
+                  <button onClick={tutupKuis} className="px-4 py-2 rounded-lg border border-[#E8C9DA] text-sm font-medium text-[#59234F] hover:bg-[#FFF7FB] transition">
+                    Batal
+                  </button>
+                  <div className="flex items-center gap-3 ml-auto">
+                    {!kuisAktifSiapKumpul && (
+                      <span className="text-xs text-amber-700 font-semibold hidden sm:inline">
+                        {kuisAktifBelumDijawab.length} soal belum selesai
+                      </span>
+                    )}
+                    <button
+                      onClick={() => kumpulkanKuis(false)}
+                      className={`px-5 py-2.5 rounded-xl text-white text-sm font-semibold shadow-sm transition flex items-center gap-2 ${
+                        kuisAktifSiapKumpul
+                          ? "bg-gradient-to-r from-[#70295F] to-[#913B7E] hover:from-[#5E2250] hover:to-[#7E326D]"
+                          : "bg-[#8D587B] hover:bg-[#70295F] cursor-pointer"
+                      }`}
+                    >
+                      Kumpulkan Jawaban
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <Box title="Kuis & Ujian Online">
               {loading ? (
@@ -841,17 +922,18 @@ export default function SiswaDashboard() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      {k.attemptSaya && (
-                        <span className="px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
-                          Skor: {k.attemptSaya.skor}
+                      {k.sudahDikerjakan ? (
+                        <span className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">
+                          Sudah dikerjakan
                         </span>
+                      ) : (
+                        <button
+                          onClick={() => mulaiKuis(k)}
+                          className="px-4 py-2 rounded-lg bg-[#59234F] text-white text-sm font-medium hover:bg-[#D85A93] hover:text-[#59234F] transition"
+                        >
+                          Kerjakan
+                        </button>
                       )}
-                      <button
-                        onClick={() => mulaiKuis(k)}
-                        className="px-4 py-2 rounded-lg bg-[#59234F] text-white text-sm font-medium hover:bg-[#D85A93] hover:text-[#59234F] transition"
-                      >
-                        {k.attemptSaya ? "Lihat Hasil" : "Kerjakan"}
-                      </button>
                     </div>
                   </div>
                 ))
@@ -957,7 +1039,7 @@ export default function SiswaDashboard() {
                 >
                   {savingProfil ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
-                {profilPesan && <p className="text-xs text-[#8B6B82]">{profilPesan}</p>}
+                {profilPesan && <p className="text-xs font-semibold text-[#8B6B82]">{profilPesan}</p>}
               </div>
             </div>
           </Box>

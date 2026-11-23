@@ -1,6 +1,6 @@
 // app/api/laporan/route.ts
 // Menyediakan rekap data laporan untuk Kurikulum, Kepala Sekolah, dan Admin:
-// - ?jenis=rekap-nilai : data seluruh nilai (manual, tugas, kuis)
+// - ?jenis=rekap-nilai : data seluruh nilai (manual dan tugas; kuis dirahasiakan sehingga tidak disertakan)
 // - ?jenis=guru-kelas  : data kelas, wali kelas, jumlah siswa, dan guru yang mengajar
 // - ?jenis=aktivitas-guru : jumlah materi, tugas, kuis, dan nilai yang dibuat tiap guru
 
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const jenis = url.searchParams.get("jenis");
 
     // =========================================================================
-    // 1. REKAP NILAI
+    // 1. REKAP NILAI (Nilai manual dan nilai tugas; nilai kuis dirahasiakan)
     // =========================================================================
     if (jenis === "rekap-nilai") {
       const hasil: any[] = [];
@@ -85,38 +85,9 @@ export async function GET(request: Request) {
         }
       }
 
-      // C. Dari Kuis (pengerjaan kuis siswa)
-      const dataKuis = await Kuis.find({ "attempts.0": { $exists: true } })
-        .populate("guru", "nama")
-        .populate("attempts.siswa", "nama kelas jurusan")
-        .lean();
-
-      for (const k of dataKuis as any[]) {
-        const guruNama = k.guru?.nama || "Guru";
-        const guruId = String(k.guru?._id || k.guru || "");
-        for (const a of k.attempts || []) {
-          if (a.skor != null) {
-            const siswaObj = a.siswa || {};
-            const key = `kuis-${k._id}-${siswaObj._id || a.siswa}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              hasil.push({
-                id: key,
-                siswa: siswaObj.nama || "Siswa",
-                kelas: k.kelas || siswaObj.kelas || "-",
-                jurusan: siswaObj.jurusan || "-",
-                mataPelajaran: k.mataPelajaran || "-",
-                guru: guruNama,
-                guruId,
-                jenis: "kuis",
-                judul: k.judul || "Kuis",
-                nilai: a.skor,
-                tanggal: a.waktuSelesai || (k as any).createdAt || new Date(),
-              });
-            }
-          }
-        }
-      }
+      // Catatan Kerahasiaan Nilai Kuis:
+      // Sesuai aturan kerahasiaan, skor kuis bersifat privat antara guru pembuat dan kuis terkait,
+      // sehingga tidak lagi dimasukkan ke rekap-nilai umum Kurikulum/Kepsek.
 
       hasil.sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
       return NextResponse.json({ success: true, data: hasil });

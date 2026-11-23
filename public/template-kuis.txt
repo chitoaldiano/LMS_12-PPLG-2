@@ -1,0 +1,39 @@
+# ==============================================================================
+# TEMPLATE IMPORT KUIS - LMS SMK CITRA NEGARA
+# ==============================================================================
+# Format soal menggunakan tag pada setiap baris:
+#
+# Q<nomor>>: Pertanyaan soal (nomor boleh tidak ada atau tidak berurutan)
+# A>: Pilihan jawaban (urutan baris otomatis menentukan huruf A, B, C, D, dst)
+# PT>: Poin jika jawaban BENAR (default: 1 jika tidak diisi)
+# PF>: Poin jika jawaban SALAH (boleh 0 atau angka negatif, default: 0)
+# K>: Kunci jawaban benar (satu huruf: A, B, C, D, dst)
+#
+# Toleransi:
+# - Spasi setelah tanda titik dua (:) boleh ada atau tidak ("PT>:2" dan "PF>: 0" sama-sama valid).
+# - Huruf besar atau kecil pada tag tidak masalah ("Q1>:", "q1>:", "a>:", "k>:").
+# - Baris kosong diabaikan.
+# - Baris tanpa tag dianggap lanjutan baris sebelumnya (untuk pertanyaan atau pilihan yang panjang).
+# - Tag tidak dikenal akan diabaikan dan dicatat sebagai peringatan.
+# - Pilihan jawaban minimal 2 dan maksimal 8 per soal.
+# - File yang didukung: .docx dan .txt (maksimal ukuran 2MB).
+# ==============================================================================
+
+Q1>: Budi ditugaskan merancang fitur dasbor untuk akun Guru di LMS sekolah. Fitur apa yang paling relevan untuk guru?
+A>: Mengubah jadwal libur nasional sekolah
+A>: Mengunggah materi pelajaran dan menilai tugas
+A>: Membayar uang SPP bulanan siswa
+A>: Menghapus akun kepala sekolah
+A>: Mengerjakan kuis yang dibuat siswa
+PT>: 2
+PF>: 0
+K>: B
+
+Q2>: Protokol jaringan apa yang digunakan untuk transfer data web yang aman terenkripsi?
+A>: HTTP
+A>: FTP
+A>: HTTPS
+A>: SMTP
+PT>: 2
+PF>: 0
+K>: C

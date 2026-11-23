@@ -2,29 +2,38 @@
 // Buat login user yang udah terdaftar
 // Akses: POST /api/users/login
 //
-// PENTING: satu kolom login di halaman login, tapi dicocokkan ke 4 kemungkinan field
-// sekaligus (sesuai role user tsb): username (admin), nisn (siswa), nip (kepsek), email (guru/kurikulum)
+// PENTING: Mendukung pencocokan multi-identitas dan validasi kesesuaian format peran (role)
+// agar akun hanya dapat login sesuai dengan format peran yang dipilih di halaman login.
 
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin",
+  guru: "Guru",
+  kurikulum: "Kurikulum",
+  kepsek: "Kepsek",
+  siswa: "Siswa",
+};
 
 export async function POST(request: Request) {
   try {
     await connectDB();
 
     const body = await request.json();
-    const { identifier, password } = body;
+    const { identifier, password, role } = body;
 
     if (!identifier || !password) {
       return Response.json(
-        { success: false, message: "Login dan password wajib diisi" },
+        { success: false, message: "Identitas akun dan password wajib diisi" },
         { status: 400 }
       );
     }
 
     const idTrim = String(identifier).trim();
     const idLower = idTrim.toLowerCase();
+    const roleExpected = typeof role === "string" ? role.trim().toLowerCase() : undefined;
 
     // Cari user yang cocok di salah satu dari 4 kemungkinan field login
     const user = await User.findOne({
@@ -35,13 +44,12 @@ export async function POST(request: Request) {
         { email: idLower },
       ],
     });
-    console.log("USER FOUND:", !!user);
 
     if (!user) {
       // Sengaja pesannya digeneralisir (bukan "akun tidak ditemukan")
       // supaya orang jahat gak bisa nebak-nebak akun mana yang terdaftar
       return Response.json(
-        { success: false, message: "Login atau password salah" },
+        { success: false, message: "Identitas akun atau password salah" },
         { status: 401 }
       );
     }
@@ -50,8 +58,22 @@ export async function POST(request: Request) {
     const passwordCocok = await bcrypt.compare(password, user.password);
     if (!passwordCocok) {
       return Response.json(
-        { success: false, message: "Login atau password salah" },
+        { success: false, message: "Identitas akun atau password salah" },
         { status: 401 }
+      );
+    }
+
+    // Validasi apakah format peran yang dipilih sesuai dengan peran akun sebenarnya
+    if (roleExpected && user.role !== roleExpected) {
+      const userRoleLabel = ROLE_LABELS[user.role] || user.role;
+      const expectedRoleLabel = ROLE_LABELS[roleExpected] || roleExpected;
+      return Response.json(
+        {
+          success: false,
+          message: `Format peran tidak sesuai. Akun ini terdaftar sebagai ${userRoleLabel}, bukan ${expectedRoleLabel}. Silakan pilih format peran "${userRoleLabel}" untuk masuk.`,
+          suggestedRole: user.role,
+        },
+        { status: 403 }
       );
     }
 

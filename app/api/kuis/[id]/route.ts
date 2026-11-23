@@ -1,5 +1,6 @@
 // app/api/kuis/[id]/route.ts
-// GET    /api/kuis/ID?siswa=ID -> detail soal (jawabanBenar disembunyikan kalau siswa belum pernah mengerjakan)
+// GET    /api/kuis/ID?siswa=ID -> detail kuis & soal untuk siswa
+// RAHASIA: Jawaban benar, skor, poin, dan pembahasan tidak pernah dibocorkan ke browser siswa.
 // DELETE /api/kuis/ID -> hapus kuis
 import connectDB from "@/lib/mongodb";
 import Kuis from "@/models/Kuis";
@@ -19,11 +20,27 @@ export async function GET(request: Request, { params }: Params) {
 
     const attempt = siswa ? kuis.attempts?.find((a: any) => String(a.siswa) === siswa) : null;
 
-    const soal = kuis.soal.map((s: any, i: number) => ({
+    // Jika siswa sudah pernah mengerjakan: kuis tidak bisa dibuka lagi, jangan bocorkan nilai/soal/kunci
+    if (attempt) {
+      return Response.json({
+        success: true,
+        data: {
+          _id: kuis._id,
+          judul: kuis.judul,
+          deskripsi: kuis.deskripsi,
+          mataPelajaran: kuis.mataPelajaran,
+          durasiMenit: kuis.durasiMenit,
+          guru: kuis.guru,
+          sudahDikerjakan: true,
+        },
+      });
+    }
+
+    // Siswa belum mengerjakan: berikan daftar pertanyaan & pilihan SAJA
+    // Buang seluruh field jawabanBenar, poinBenar, poinSalah
+    const soal = (kuis.soal || []).map((s: any) => ({
       pertanyaan: s.pertanyaan,
       pilihan: s.pilihan,
-      jawabanBenar: attempt ? s.jawabanBenar : undefined,
-      jawabanSaya: attempt ? attempt.jawaban[i] : undefined,
     }));
 
     return Response.json({
@@ -36,8 +53,7 @@ export async function GET(request: Request, { params }: Params) {
         durasiMenit: kuis.durasiMenit,
         guru: kuis.guru,
         soal,
-        sudahDikerjakan: !!attempt,
-        skor: attempt?.skor ?? null,
+        sudahDikerjakan: false,
       },
     });
   } catch (error: any) {

@@ -98,6 +98,20 @@ interface GuruKuisItem extends KuisItem {
 interface HasilKuisDetail extends KuisItem {
   attempts: AttemptItem[];
   jumlahSoal: number;
+  totalPoinMaks?: number;
+}
+
+interface ImportPreviewData {
+  soal: {
+    pertanyaan: string;
+    pilihan: string[];
+    jawabanBenar: number;
+    poinBenar: number;
+    poinSalah: number;
+  }[];
+  error: string[];
+  peringatan: string[];
+  totalPoin: number;
 }
 
 export default function GuruDashboard() {
@@ -283,15 +297,15 @@ export default function GuruDashboard() {
     if (r.success) lihatTugas({ _id: detailTugas._id });
   }
 
-  // ===================== KUIS =====================
+  // ===================== KUIS MANUAL =====================
   const [showKuisForm, setShowKuisForm] = useState(false);
   const [kuisForm, setKuisForm] = useState({ judul: "", deskripsi: "", mataPelajaran: "", kelas: "", durasiMenit: 30 });
-  const [soalForm, setSoalForm] = useState([{ pertanyaan: "", pilihan: ["", "", "", ""], jawabanBenar: 0 }]);
+  const [soalForm, setSoalForm] = useState([{ pertanyaan: "", pilihan: ["", "", "", ""], jawabanBenar: 0, poinBenar: 1, poinSalah: 0 }]);
   const [savingKuis, setSavingKuis] = useState(false);
   const [pesanKuis, setPesanKuis] = useState("");
 
   function tambahSoal() {
-    setSoalForm([...soalForm, { pertanyaan: "", pilihan: ["", "", "", ""], jawabanBenar: 0 }]);
+    setSoalForm([...soalForm, { pertanyaan: "", pilihan: ["", "", "", ""], jawabanBenar: 0, poinBenar: 1, poinSalah: 0 }]);
   }
   function hapusSoal(i: number) {
     if (soalForm.length <= 1) return;
@@ -332,7 +346,7 @@ export default function GuruDashboard() {
     setSavingKuis(false);
     if (r.success) {
       setKuisForm({ judul: "", deskripsi: "", mataPelajaran: "", kelas: "", durasiMenit: 30 });
-      setSoalForm([{ pertanyaan: "", pilihan: ["", "", "", ""], jawabanBenar: 0 }]);
+      setSoalForm([{ pertanyaan: "", pilihan: ["", "", "", ""], jawabanBenar: 0, poinBenar: 1, poinSalah: 0 }]);
       setShowKuisForm(false);
       setPesanKuis("");
       muat(user);
@@ -348,10 +362,160 @@ export default function GuruDashboard() {
     if (r.success) muat(user);
   }
 
+  // ===================== KUIS IMPORT DARI FILE =====================
+  const [showImportForm, setShowImportForm] = useState(false);
+  const [importForm, setImportForm] = useState({ judul: "", mataPelajaran: "", kelas: "", durasiMenit: 30 });
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [readingFile, setReadingFile] = useState(false);
+  const [savingImport, setSavingImport] = useState(false);
+  const [pesanImport, setPesanImport] = useState("");
+  const [previewData, setPreviewData] = useState<ImportPreviewData | null>(null);
+
+  function pilihFileImport(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+    if (ext !== ".docx" && ext !== ".txt") {
+      setPesanImport("Format file tidak didukung. Harap pilih file .docx atau .txt.");
+      setImportFile(null);
+      setPreviewData(null);
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setPesanImport("Ukuran file melebihi batas maksimal 2MB.");
+      setImportFile(null);
+      setPreviewData(null);
+      return;
+    }
+    setImportFile(file);
+    setPesanImport("");
+    setPreviewData(null);
+  }
+
+  async function bacaFile() {
+    if (!importFile) {
+      setPesanImport("Pilih file kuis terlebih dahulu.");
+      return;
+    }
+    setReadingFile(true);
+    setPesanImport("");
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+
+      const res = await fetch("/api/kuis/import", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      setReadingFile(false);
+
+      if (data.success && data.data) {
+        setPreviewData(data.data);
+      } else {
+        setPesanImport(data.message || "Gagal membaca isi file kuis.");
+      }
+    } catch {
+      setReadingFile(false);
+      setPesanImport("Terjadi kesalahan koneksi saat membaca file.");
+    }
+  }
+
+  async function simpanKuisImport() {
+    if (!user) return;
+    if (!importForm.judul || !importForm.mataPelajaran || !importForm.kelas) {
+      setPesanImport("Judul kuis, mata pelajaran, dan kelas wajib diisi.");
+      return;
+    }
+    if (!previewData || previewData.soal.length === 0) {
+      setPesanImport("Belum ada soal yang terbaca dari file.");
+      return;
+    }
+    if (previewData.error.length > 0) {
+      setPesanImport("Terdapat kesalahan format pada file yang harus diperbaiki terlebih dahulu.");
+      return;
+    }
+
+    setSavingImport(true);
+    setPesanImport("");
+    try {
+      const res = await fetch("/api/kuis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          judul: importForm.judul,
+          mataPelajaran: importForm.mataPelajaran,
+          kelas: importForm.kelas,
+          durasiMenit: Number(importForm.durasiMenit) || 30,
+          guru: user._id,
+          soal: previewData.soal,
+        }),
+      });
+      const r = await res.json();
+      setSavingImport(false);
+      if (r.success) {
+        setShowImportForm(false);
+        setImportForm({ judul: "", mataPelajaran: "", kelas: "", durasiMenit: 30 });
+        setImportFile(null);
+        setPreviewData(null);
+        setPesanImport("");
+        muat(user);
+      } else {
+        setPesanImport(r.message || "Gagal menyimpan kuis hasil import.");
+      }
+    } catch {
+      setSavingImport(false);
+      setPesanImport("Terjadi kesalahan koneksi saat menyimpan kuis.");
+    }
+  }
+
+  // ===================== LIHAT HASIL KUIS =====================
   const [hasilKuisDetail, setHasilKuisDetail] = useState<HasilKuisDetail | null>(null);
   async function lihatHasilKuis(k: { _id: string }) {
-    const r = await fetch(`/api/kuis/${k._id}/hasil`).then((x) => x.json());
-    if (r.success) setHasilKuisDetail(r.data);
+    if (!user) return;
+    try {
+      const r = await fetch(`/api/kuis/${k._id}/hasil?guru=${user._id}`).then((x) => x.json());
+      if (r.success) {
+        setHasilKuisDetail(r.data);
+      } else {
+        alert(r.message || "Gagal memuat hasil kuis.");
+      }
+    } catch {
+      alert("Terjadi kesalahan koneksi saat memuat hasil kuis.");
+    }
+  }
+
+  function unduhCSV() {
+    if (!hasilKuisDetail) return;
+    const header = ["No", "Nama Siswa", "Kelas", "Skor (0-100)", "Poin Didapat", "Poin Maksimal", "Benar", "Salah", "Kosong", "Waktu Selesai"];
+    const rows = (hasilKuisDetail.attempts || []).map((a, i) => {
+      const nama = typeof a.siswa === "object" && a.siswa !== null ? (a.siswa as SiswaPopulated).nama : "Siswa";
+      const kls = typeof a.siswa === "object" && a.siswa !== null ? (a.siswa as SiswaPopulated).kelas || "-" : "-";
+      return [
+        i + 1,
+        `"${nama.replace(/"/g, '""')}"`,
+        `"${kls}"`,
+        a.skor,
+        a.poin ?? 0,
+        a.poinMaks || hasilKuisDetail.totalPoinMaks || 0,
+        a.benar ?? 0,
+        a.salah ?? 0,
+        a.kosong ?? 0,
+        `"${fmtJam(a.waktuSelesai)}"`,
+      ];
+    });
+
+    // Tambahkan UTF-8 BOM (\uFEFF) di awal string agar Microsoft Excel membukanya dengan benar
+    const csvContent = "\uFEFF" + [header.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Hasil_Kuis_${hasilKuisDetail.judul.replace(/[^a-zA-Z0-9_-]/g, "_")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   // ===================== NILAI MANUAL =====================
@@ -970,43 +1134,321 @@ export default function GuruDashboard() {
               <Box
                 title={`Hasil Kuis: ${hasilKuisDetail.judul}`}
                 action={
-                  <button onClick={() => setHasilKuisDetail(null)} className={btnGhost}>
-                    Kembali ke Daftar Kuis
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={unduhCSV} className={btnGhost + " !text-xs font-semibold flex items-center gap-1.5"}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                      </svg>
+                      Unduh CSV
+                    </button>
+                    <button onClick={() => setHasilKuisDetail(null)} className={btnGhost}>
+                      Kembali ke Daftar Kuis
+                    </button>
+                  </div>
                 }
               >
-                <div className="px-6 py-3.5 border-b border-[#F0DCE8] bg-[#FFF9FC] text-xs font-semibold text-[#81506F]">
-                  {hasilKuisDetail.kelas} &middot; {hasilKuisDetail.mataPelajaran} &middot; {hasilKuisDetail.jumlahSoal} soal
+                <div className="px-6 py-3.5 border-b border-[#F0DCE8] bg-[#FFF9FC] flex items-center justify-between gap-4 flex-wrap text-xs font-semibold text-[#81506F]">
+                  <div>
+                    {hasilKuisDetail.kelas} &middot; {hasilKuisDetail.mataPelajaran} &middot; {hasilKuisDetail.jumlahSoal} soal
+                    {hasilKuisDetail.totalPoinMaks ? ` · Total Poin: ${hasilKuisDetail.totalPoinMaks}` : ""}
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold">
+                    Nilai bersifat RAHASIA (hanya guru pemilik kuis)
+                  </span>
                 </div>
+
+                {/* Ringkasan Statistik Hasil Kuis */}
+                {hasilKuisDetail.attempts.length > 0 && (
+                  <div className="p-6 border-b border-[#F0DCE8] grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#FCF8FB]">
+                    <div className="p-3.5 rounded-xl bg-white border border-[#F0DCE8] text-center">
+                      <p className="text-[11px] font-semibold text-[#81506F]">Siswa Mengerjakan</p>
+                      <p className="text-xl font-extrabold text-[#59234F] mt-1">{hasilKuisDetail.attempts.length}</p>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-white border border-[#F0DCE8] text-center">
+                      <p className="text-[11px] font-semibold text-[#81506F]">Rata-rata Skor</p>
+                      <p className="text-xl font-extrabold text-[#70295F] mt-1">
+                        {Math.round(hasilKuisDetail.attempts.reduce((a, b) => a + (b.skor ?? 0), 0) / hasilKuisDetail.attempts.length)}
+                      </p>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-white border border-[#F0DCE8] text-center">
+                      <p className="text-[11px] font-semibold text-[#81506F]">Skor Tertinggi</p>
+                      <p className="text-xl font-extrabold text-green-600 mt-1">
+                        {Math.max(...hasilKuisDetail.attempts.map((a) => a.skor ?? 0))}
+                      </p>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-white border border-[#F0DCE8] text-center">
+                      <p className="text-[11px] font-semibold text-[#81506F]">Skor Terendah</p>
+                      <p className="text-xl font-extrabold text-red-600 mt-1">
+                        {Math.min(...hasilKuisDetail.attempts.map((a) => a.skor ?? 0))}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {hasilKuisDetail.attempts.length === 0 ? (
                   <Kosong text="Belum ada siswa yang mengerjakan kuis ini." />
                 ) : (
-                  hasilKuisDetail.attempts.map((a, i) => {
-                    const namaSiswa = typeof a.siswa === "object" && a.siswa !== null ? (a.siswa as SiswaPopulated).nama : "Siswa";
-                    const kelasSiswa = typeof a.siswa === "object" && a.siswa !== null ? (a.siswa as SiswaPopulated).kelas : "";
-                    return (
-                      <div key={i} className="px-6 py-3.5 border-b border-[#F9EAF2] last:border-0 flex items-center justify-between gap-4 hover:bg-[#FFF7FB] transition">
-                        <div className="min-w-0">
-                          <p className="font-bold text-[#59234F]">{namaSiswa}</p>
-                          <p className="text-xs text-[#81506F]">{kelasSiswa ? `${kelasSiswa} · ` : ""}Selesai {fmtJam(a.waktuSelesai)}</p>
-                        </div>
-                        <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200 text-xs font-bold shrink-0">
-                          Skor: {a.skor}
-                        </span>
-                      </div>
-                    );
-                  })
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-sm min-w-[700px]">
+                      <thead>
+                        <tr className="text-left text-[#81506F] text-xs font-bold uppercase tracking-wider bg-[#FFF7FB] border-b border-[#F0DCE8]">
+                          <th className="px-5 py-3">No</th>
+                          <th className="px-5 py-3">Nama Siswa</th>
+                          <th className="px-4 py-3">Kelas</th>
+                          <th className="px-4 py-3 text-center">Skor (0-100)</th>
+                          <th className="px-4 py-3 text-center">Poin / Maks</th>
+                          <th className="px-3 py-3 text-center text-green-700">Benar</th>
+                          <th className="px-3 py-3 text-center text-red-600">Salah</th>
+                          <th className="px-3 py-3 text-center text-gray-500">Kosong</th>
+                          <th className="px-5 py-3">Waktu Selesai</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hasilKuisDetail.attempts.map((a, i) => {
+                          const namaSiswa = typeof a.siswa === "object" && a.siswa !== null ? (a.siswa as SiswaPopulated).nama : "Siswa";
+                          const kelasSiswa = typeof a.siswa === "object" && a.siswa !== null ? (a.siswa as SiswaPopulated).kelas || "-" : "-";
+                          return (
+                            <tr key={i} className="border-b border-[#F9EAF2] last:border-0 hover:bg-[#FFF7FB] transition">
+                              <td className="px-5 py-3.5 text-xs text-[#B596AA] font-semibold">{i + 1}</td>
+                              <td className="px-5 py-3.5 font-bold text-[#59234F]">{namaSiswa}</td>
+                              <td className="px-4 py-3.5 text-xs text-[#81506F]">{kelasSiswa}</td>
+                              <td className="px-4 py-3.5 text-center">
+                                <span className="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200 text-xs font-bold">
+                                  {a.skor}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3.5 text-center font-semibold text-xs text-[#59234F]">
+                                {a.poin ?? 0} / {a.poinMaks || hasilKuisDetail.totalPoinMaks || 0}
+                              </td>
+                              <td className="px-3 py-3.5 text-center font-bold text-xs text-green-700">{a.benar ?? 0}</td>
+                              <td className="px-3 py-3.5 text-center font-bold text-xs text-red-600">{a.salah ?? 0}</td>
+                              <td className="px-3 py-3.5 text-center font-medium text-xs text-gray-500">{a.kosong ?? 0}</td>
+                              <td className="px-5 py-3.5 text-xs text-[#81506F]">{fmtJam(a.waktuSelesai)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </Box>
             ) : (
               <Box
                 title="Kuis Saya"
                 action={
-                  <button onClick={() => setShowKuisForm((v) => !v)} className={btnPrimary}>
-                    {showKuisForm ? "Tutup Form" : "+ Buat Kuis"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setShowImportForm((v) => !v);
+                        setShowKuisForm(false);
+                      }}
+                      className={btnGhost + " !text-xs font-semibold"}
+                    >
+                      {showImportForm ? "Tutup Import" : "Import dari File"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowKuisForm((v) => !v);
+                        setShowImportForm(false);
+                      }}
+                      className={btnPrimary}
+                    >
+                      {showKuisForm ? "Tutup Form" : "+ Buat Kuis"}
+                    </button>
+                  </div>
                 }
               >
+                {/* Form Import dari File (.docx / .txt) */}
+                {showImportForm && (
+                  <div className="px-6 py-5 border-b border-[#F0DCE8] bg-[#FFF9FC] space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#F0DCE8]">
+                      <div>
+                        <h3 className="font-bold text-[#59234F] text-sm">Import Kuis dari File (.docx / .txt)</h3>
+                        <p className="text-xs text-[#81506F] mt-0.5">Unggah dokumen berisi kumpulan soal dengan format tag standar.</p>
+                      </div>
+                      <a
+                        href="/template-kuis.txt"
+                        download="template-kuis.txt"
+                        className="text-xs font-semibold text-[#D94383] underline hover:text-[#70295F] flex items-center gap-1"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                        </svg>
+                        Unduh Template (.txt)
+                      </a>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Field label="Judul Kuis">
+                        <input
+                          placeholder="Contoh: Penilaian Harian 1 - Pemrograman Web"
+                          value={importForm.judul}
+                          onChange={(e) => setImportForm({ ...importForm, judul: e.target.value })}
+                          className={inputCls}
+                        />
+                      </Field>
+                      <Field label="Mata Pelajaran">
+                        {daftarMapel.length ? (
+                          <select value={importForm.mataPelajaran} onChange={(e) => setImportForm({ ...importForm, mataPelajaran: e.target.value })} className={inputCls}>
+                            <option value="">Pilih mata pelajaran</option>
+                            {daftarMapel.map((m: string) => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        ) : (
+                          <input value={importForm.mataPelajaran} onChange={(e) => setImportForm({ ...importForm, mataPelajaran: e.target.value })} placeholder="Contoh: Pemrograman Web" className={inputCls} />
+                        )}
+                      </Field>
+                      <Field label="Kelas">
+                        <select value={importForm.kelas} onChange={(e) => setImportForm({ ...importForm, kelas: e.target.value })} className={inputCls}>
+                          <option value="">Pilih kelas</option>
+                          {kelasList.map((k) => <option key={k._id} value={k.namaKelas}>{k.namaKelas}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Durasi Pengerjaan (menit)">
+                        <input
+                          type="number"
+                          min={1}
+                          value={importForm.durasiMenit}
+                          onChange={(e) => setImportForm({ ...importForm, durasiMenit: Number(e.target.value) })}
+                          className={inputCls}
+                        />
+                      </Field>
+                    </div>
+
+                    <Field label="Pilih File Kuis (.docx / .txt, maks 2MB)">
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <label className="flex-1 min-w-[220px] px-4 py-3 rounded-xl border border-dashed border-[#D9A9C4] bg-white text-sm text-[#81506F] cursor-pointer hover:border-[#A53D78] hover:bg-[#FFF7FB] transition">
+                          <span className="font-semibold text-[#59234F]">{importFile ? importFile.name : "Klik untuk pilih file .docx atau .txt"}</span>
+                          <input type="file" accept=".docx,.txt" onChange={pilihFileImport} className="hidden" />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={bacaFile}
+                          disabled={!importFile || readingFile}
+                          className="px-4 py-3 rounded-xl bg-[#59234F] text-white text-sm font-semibold hover:bg-[#D94383] transition disabled:opacity-50 shrink-0"
+                        >
+                          {readingFile ? "Membaca File..." : "Baca File"}
+                        </button>
+                      </div>
+                    </Field>
+
+                    {pesanImport && <p className="text-xs font-semibold text-red-600">{pesanImport}</p>}
+
+                    {/* Pratinjau Hasil Pembacaan File */}
+                    {previewData && (
+                      <div className="mt-4 p-4 rounded-2xl bg-white border border-[#F0DCE8] space-y-4">
+                        <div className="flex items-center justify-between gap-3 flex-wrap border-b border-[#F0DCE8] pb-3">
+                          <div className="flex items-center gap-3">
+                            <span className="px-3 py-1 rounded-full bg-[#FCE4F0] text-[#70295F] text-xs font-bold">
+                              {previewData.soal.length} Soal Terbaca
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+                              Total Poin: {previewData.totalPoin}
+                            </span>
+                          </div>
+                          {previewData.error.length === 0 ? (
+                            <span className="text-xs font-bold text-green-600 flex items-center gap-1">
+                              ✓ Format file valid dan siap disimpan
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-red-600 flex items-center gap-1">
+                              ⚠ Format file memiliki error
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Error List */}
+                        {previewData.error.length > 0 && (
+                          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 space-y-1">
+                            <p className="text-xs font-bold text-red-700">Daftar Error (Perbaiki file sebelum menyimpan):</p>
+                            <ul className="list-disc list-inside text-xs text-red-600 space-y-0.5">
+                              {previewData.error.map((err, i) => (
+                                <li key={i}>{err}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Warning List */}
+                        {previewData.peringatan.length > 0 && (
+                          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
+                            <p className="text-xs font-bold text-amber-700">Peringatan:</p>
+                            <ul className="list-disc list-inside text-xs text-amber-600 space-y-0.5">
+                              {previewData.peringatan.map((warn, i) => (
+                                <li key={i}>{warn}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Pratinjau 3 Soal Pertama */}
+                        {previewData.soal.length > 0 && (
+                          <div className="space-y-3">
+                            <p className="text-xs font-bold text-[#81506F]">Pratinjau 3 Soal Pertama:</p>
+                            {previewData.soal.slice(0, 3).map((s, idx) => (
+                              <div key={idx} className="p-3.5 rounded-xl border border-[#F0DCE8] bg-[#FFF9FC] space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-xs font-bold text-[#59234F]">
+                                    {idx + 1}. {s.pertanyaan}
+                                  </p>
+                                  <span className="text-[11px] font-semibold text-[#81506F] shrink-0">
+                                    PT: {s.poinBenar} | PF: {s.poinSalah}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 pl-4">
+                                  {s.pilihan.map((opsi, oIdx) => {
+                                    const huruf = String.fromCharCode(65 + oIdx);
+                                    const isKunci = s.jawabanBenar === oIdx;
+                                    return (
+                                      <div
+                                        key={oIdx}
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-2 ${
+                                          isKunci
+                                            ? "bg-green-100 text-green-800 font-bold border border-green-300"
+                                            : "bg-white text-[#59234F] border border-[#F0DCE8]"
+                                        }`}
+                                      >
+                                        <span className="w-5 h-5 rounded-full bg-[#70295F]/10 flex items-center justify-center font-bold shrink-0">
+                                          {huruf}
+                                        </span>
+                                        <span className="truncate">{opsi}</span>
+                                        {isKunci && <span className="ml-auto text-[10px] text-green-700 shrink-0 font-bold">(KUNCI)</span>}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                            {previewData.soal.length > 3 && (
+                              <p className="text-xs text-[#B596AA] text-center italic">
+                                ... dan {previewData.soal.length - 3} soal lainnya siap disimpan.
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={simpanKuisImport}
+                            disabled={
+                              savingImport ||
+                              previewData.error.length > 0 ||
+                              previewData.soal.length === 0 ||
+                              !importForm.judul ||
+                              !importForm.mataPelajaran ||
+                              !importForm.kelas
+                            }
+                            className={btnPrimary}
+                          >
+                            {savingImport ? "Menyimpan Kuis..." : "Simpan Kuis"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Form Buat Kuis Manual */}
                 {showKuisForm && (
                   <div className="px-6 py-5 border-b border-[#F0DCE8] bg-[#FFF9FC] space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1025,7 +1467,7 @@ export default function GuruDashboard() {
                             {daftarMapel.map((m: string) => <option key={m} value={m}>{m}</option>)}
                           </select>
                         ) : (
-                          <input value={kuisForm.mataPelajaran} onChange={(e) => setKuisForm({ ...kuisForm, mataPelajaran: e.target.value })} className={inputCls} />
+                          <input value={kuisForm.mataPelajaran} onChange={(e) => setKuisForm({ ...kuisForm, mataPelajaran: e.target.value })} placeholder="Contoh: Pemrograman Web" className={inputCls} />
                         )}
                       </Field>
                       <Field label="Kelas">

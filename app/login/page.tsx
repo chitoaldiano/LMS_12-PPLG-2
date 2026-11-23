@@ -65,6 +65,7 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [suggestedRole, setSuggestedRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -73,19 +74,33 @@ export default function LoginPage() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorMsg("");
+    setSuggestedRole(null);
     setIsLoading(true);
 
     try {
       const res = await fetch("/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({
+          identifier,
+          password,
+          role: selectedRoleHint,
+        }),
       });
 
       const result = await res.json();
 
       if (!result.success) {
         setErrorMsg(result.message || "Identitas akun atau password tidak cocok.");
+        if (result.suggestedRole) {
+          setSuggestedRole(result.suggestedRole);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      if (result.data?.role && result.data.role !== selectedRoleHint) {
+        setErrorMsg(`Format peran tidak sesuai. Akun ini bukan akun ${activeHint.label}.`);
         setIsLoading(false);
         return;
       }
@@ -286,6 +301,7 @@ export default function LoginPage() {
                         onClick={() => {
                           setSelectedRoleHint(r.role);
                           setErrorMsg("");
+                          setSuggestedRole(null);
                         }}
                         className={`rounded-lg py-2 text-xs font-bold transition-all duration-150 text-center ${
                           isSelected
@@ -307,19 +323,38 @@ export default function LoginPage() {
               {errorMsg && (
                 <div
                   role="alert"
-                  className="mb-5 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-800 shadow-xs"
+                  className="mb-5 flex flex-col gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-800 shadow-xs dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="mt-0.5 h-4 w-4 shrink-0 text-rose-600"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 8v4M12 16h.01" />
-                  </svg>
-                  <span className="leading-relaxed">{errorMsg}</span>
+                  <div className="flex items-start gap-3">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 8v4M12 16h.01" />
+                    </svg>
+                    <span className="leading-relaxed font-medium">{errorMsg}</span>
+                  </div>
+                  {suggestedRole && (
+                    <div className="pl-7">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedRoleHint(suggestedRole);
+                          setErrorMsg("");
+                          setSuggestedRole(null);
+                        }}
+                        className="inline-flex items-center gap-1.5 font-bold text-[#501D45] dark:text-rose-300 hover:text-[#3B1333] dark:hover:text-rose-100 underline underline-offset-2 transition-colors cursor-pointer"
+                      >
+                        <span>
+                          Beralih ke format peran {ROLE_HINTS.find((r) => r.role === suggestedRole)?.label || suggestedRole} &rarr;
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
