@@ -65,10 +65,10 @@ function Beranda({ user, setNav }: { user: any; setNav: (k: string) => void }) {
 
       {/* Grid Statistik */}
       <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-        <StatCard label="Total kelas" value={loading ? "..." : kelas.length} icon="kelas" />
-        <StatCard label="Guru aktif mengajar" value={loading ? "..." : guruUnik.size} icon="guru" />
-        <StatCard label="Data nilai" value={loading ? "..." : rows.length} icon="nilai" />
-        <StatCard label="Rata-rata nilai" value={loading ? "..." : rata} icon="beranda" />
+        <StatCard label="Total kelas" value={loading ? "..." : kelas.length} icon="kelas" onClick={() => setNav("kelas")} />
+        <StatCard label="Guru aktif mengajar" value={loading ? "..." : guruUnik.size} icon="guru" onClick={() => setNav("kelas")} />
+        <StatCard label="Data nilai" value={loading ? "..." : rows.length} icon="nilai" onClick={() => setNav("nilai")} />
+        <StatCard label="Rata-rata nilai" value={loading ? "..." : rata} icon="beranda" onClick={() => setNav("nilai")} />
       </div>
 
       <Box title="Menu Cepat">

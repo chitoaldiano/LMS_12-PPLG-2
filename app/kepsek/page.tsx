@@ -19,7 +19,7 @@ function rataPer(rows: any[], kolom: string) {
     .sort((a, b) => b.rata - a.rata);
 }
 
-function Beranda({ user }: { user: any }) {
+function Beranda({ user, setNav }: { user: any; setNav: (k: string) => void }) {
   const [users, setUsers] = useState<any[]>([]);
   const [kelas, setKelas] = useState<any[]>([]);
   const [rows, setRows] = useState<any[]>([]);
@@ -85,14 +85,21 @@ function Beranda({ user }: { user: any }) {
 
       {/* Grid Statistik */}
       <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-        <StatCard label="Total guru" value={loading ? "..." : jmlGuru} icon="guru" />
-        <StatCard label="Total siswa" value={loading ? "..." : jmlSiswa} icon="siswa" />
-        <StatCard label="Total kelas" value={loading ? "..." : kelas.length} icon="kelas" />
-        <StatCard label="Rata-rata nilai" value={loading ? "..." : rata} icon="nilai" />
+        <StatCard label="Total guru" value={loading ? "..." : jmlGuru} icon="guru" onClick={() => setNav("guru")} />
+        <StatCard label="Total siswa" value={loading ? "..." : jmlSiswa} icon="siswa" onClick={() => setNav("kelas")} />
+        <StatCard label="Total kelas" value={loading ? "..." : kelas.length} icon="kelas" onClick={() => setNav("kelas")} />
+        <StatCard label="Rata-rata nilai" value={loading ? "..." : rata} icon="nilai" onClick={() => setNav("nilai")} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <Box title="Rata-rata Nilai per Jurusan">
+        <Box
+          title="Rata-rata Nilai per Jurusan"
+          action={
+            <button onClick={() => setNav("nilai")} className="text-xs font-semibold text-[#8B3569] hover:text-[#D95A91] transition">
+              Lihat Rekap Nilai &rarr;
+            </button>
+          }
+        >
           <div className="px-6 py-5">
             {loading ? (
               <p className="text-sm text-[#B596AA]">Memuat...</p>
@@ -104,7 +111,14 @@ function Beranda({ user }: { user: any }) {
           </div>
         </Box>
 
-        <Box title="Rata-rata Nilai per Mata Pelajaran">
+        <Box
+          title="Rata-rata Nilai per Mata Pelajaran"
+          action={
+            <button onClick={() => setNav("nilai")} className="text-xs font-semibold text-[#8B3569] hover:text-[#D95A91] transition">
+              Lihat Rekap Nilai &rarr;
+            </button>
+          }
+        >
           <div className="px-6 py-5">
             {loading ? (
               <p className="text-sm text-[#B596AA]">Memuat...</p>
@@ -204,7 +218,7 @@ export default function KepsekPage() {
       ]}
       render={({ user, nav, setNav, setUser }) => (
         <>
-          {nav === "beranda" && <Beranda user={user} />}
+          {nav === "beranda" && <Beranda user={user} setNav={setNav} />}
           {nav === "guru" && <AktivitasGuru />}
           {nav === "kelas" && <GuruPerKelas />}
           {nav === "nilai" && <RekapNilai />}

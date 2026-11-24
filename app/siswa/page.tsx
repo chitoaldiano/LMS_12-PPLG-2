@@ -139,6 +139,20 @@ export default function SiswaDashboard() {
   const [bellOpen, setBellOpen] = useState(false);
   const [bellExpand, setBellExpand] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [cariTeksSiswa, setCariTeksSiswa] = useState("");
+  const [searchOpenSiswa, setSearchOpenSiswa] = useState(false);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace("#", "").toLowerCase();
+      if (["beranda", "materi", "tugas", "kuis", "nilai", "pengumuman", "profil"].includes(hash)) {
+        setNav(hash);
+      }
+    };
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   useEffect(() => {
     const s = localStorage.getItem("lms_user");
@@ -515,7 +529,180 @@ export default function SiswaDashboard() {
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span className="font-bold text-sm text-[#59234F] truncate md:hidden">SMK Citra Negara</span>
+
+            {/* Desktop Search Bar */}
+            <div className="relative hidden sm:block w-full max-w-[340px] lg:max-w-[420px]">
+              <div className="flex items-center gap-2.5 bg-white border border-[#EEDCE7] rounded-full px-3.5 py-2 shadow-[0_3px_15px_rgba(91,31,75,0.04)] focus-within:ring-2 focus-within:ring-[#D94383] focus-within:border-transparent transition">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-4-4" />
+                </svg>
+                <input
+                  type="text"
+                  value={cariTeksSiswa}
+                  onChange={(e) => {
+                    setCariTeksSiswa(e.target.value);
+                    setSearchOpenSiswa(true);
+                  }}
+                  onFocus={() => setSearchOpenSiswa(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const q = cariTeksSiswa.toLowerCase().trim();
+                      if (!q) return;
+                      const matched = NAV.find(([, l]) => l.toLowerCase().includes(q));
+                      if (matched) {
+                        setNav(matched[0]);
+                        setSearchOpenSiswa(false);
+                      } else if (materi.some((m) => m.judul.toLowerCase().includes(q))) {
+                        setNav("materi");
+                        setSearchOpenSiswa(false);
+                      } else if (tugas.some((t) => t.judul.toLowerCase().includes(q))) {
+                        setNav("tugas");
+                        setSearchOpenSiswa(false);
+                      } else if (kuisList.some((k) => k.judul.toLowerCase().includes(q))) {
+                        setNav("kuis");
+                        setSearchOpenSiswa(false);
+                      } else if (pengumuman.some((p) => p.judul.toLowerCase().includes(q))) {
+                        setNav("pengumuman");
+                        setSearchOpenSiswa(false);
+                      }
+                    } else if (e.key === "Escape") {
+                      setSearchOpenSiswa(false);
+                    }
+                  }}
+                  placeholder="Cari materi, tugas, kuis, atau menu..."
+                  className="w-full bg-transparent text-sm text-[#59234F] placeholder:text-[#A78A9D] outline-none"
+                />
+                {cariTeksSiswa && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCariTeksSiswa("");
+                      setSearchOpenSiswa(false);
+                    }}
+                    className="text-[#A78A9D] hover:text-[#59234F] text-xs font-bold p-0.5"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Dropdown Hasil Pencarian Siswa */}
+              {searchOpenSiswa && (
+                <div className="absolute left-0 mt-2 w-full bg-white rounded-2xl border border-[#F0DCE8] shadow-2xl z-50 overflow-hidden py-1 max-h-[380px] overflow-y-auto">
+                  <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-[#F0DCE8] bg-[#FFF9FC]">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#B596AA]">
+                      {cariTeksSiswa ? `Hasil untuk "${cariTeksSiswa}"` : "Pintasan Menu Siswa"}
+                    </p>
+                    <button onClick={() => setSearchOpenSiswa(false)} className="text-[10px] text-[#A78A9D] hover:text-[#59234F]">
+                      Tutup
+                    </button>
+                  </div>
+
+                  <div className="p-1">
+                    {NAV.filter(([, l]) => !cariTeksSiswa || l.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim())).map(([k, l]) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => {
+                          setNav(k);
+                          setSearchOpenSiswa(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-semibold transition ${
+                          nav === k ? "bg-[#FCEAF2] text-[#8B3569]" : "text-[#59234F] hover:bg-[#FFF0F6]"
+                        }`}
+                      >
+                        <span className="p-1 rounded-lg bg-[#FCE4F0] text-[#B52D78]">
+                          <Ico k={k} className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="flex-1">Buka {l}</span>
+                        <span className="text-[10px] text-[#B596AA]">Buka &rarr;</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {cariTeksSiswa.trim() && (
+                    <div className="border-t border-[#F0DCE8] p-1 bg-[#FAFAFA]">
+                      {materi.filter((m) => m.judul.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim())).length > 0 && (
+                        <div className="mb-1">
+                          <p className="px-3 py-1 text-[10px] font-bold text-[#8A7182]">Materi Pembelajaran</p>
+                          {materi
+                            .filter((m) => m.judul.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim()))
+                            .slice(0, 2)
+                            .map((m) => (
+                              <button
+                                key={m._id}
+                                onClick={() => {
+                                  setNav("materi");
+                                  setSearchOpenSiswa(false);
+                                }}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-[#FFF0F6] flex justify-between"
+                              >
+                                <span className="font-semibold text-[#59234F] truncate">{m.judul}</span>
+                                <span className="text-[10px] text-[#B596AA] shrink-0 ml-2">{m.mataPelajaran}</span>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                      {tugas.filter((t) => t.judul.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim())).length > 0 && (
+                        <div className="mb-1">
+                          <p className="px-3 py-1 text-[10px] font-bold text-[#8A7182]">Tugas</p>
+                          {tugas
+                            .filter((t) => t.judul.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim()))
+                            .slice(0, 2)
+                            .map((t) => (
+                              <button
+                                key={t._id}
+                                onClick={() => {
+                                  setNav("tugas");
+                                  setSearchOpenSiswa(false);
+                                }}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-[#FFF0F6] flex justify-between"
+                              >
+                                <span className="font-semibold text-[#59234F] truncate">{t.judul}</span>
+                                <span className="text-[10px] text-[#B596AA] shrink-0 ml-2">{t.mataPelajaran}</span>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                      {kuisList.filter((k) => k.judul.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim())).length > 0 && (
+                        <div className="mb-1">
+                          <p className="px-3 py-1 text-[10px] font-bold text-[#8A7182]">Kuis Online</p>
+                          {kuisList
+                            .filter((k) => k.judul.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim()))
+                            .slice(0, 2)
+                            .map((k) => (
+                              <button
+                                key={k._id}
+                                onClick={() => {
+                                  setNav("kuis");
+                                  setSearchOpenSiswa(false);
+                                }}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-[#FFF0F6] flex justify-between"
+                              >
+                                <span className="font-semibold text-[#59234F] truncate">{k.judul}</span>
+                                <span className="text-[10px] text-[#B596AA] shrink-0 ml-2">{k.mataPelajaran}</span>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Search Button */}
+            <button
+              onClick={() => setSearchOpenSiswa((v) => !v)}
+              className="sm:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#F0DCE8] bg-white text-[#59234F] hover:bg-[#FFF0F6] transition shadow-xs"
+              aria-label="Cari Fitur"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858]" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+            </button>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
@@ -577,6 +764,52 @@ export default function SiswaDashboard() {
           </div>
         </header>
 
+        {/* Mobile Search Overlay */}
+        {searchOpenSiswa && (
+          <div className="sm:hidden px-3 py-2.5 bg-white border-b border-[#F0DCE8] shadow-md z-20">
+            <div className="flex items-center gap-2 bg-[#FFF7FB] border border-[#EEDCE7] rounded-xl px-3 py-2">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              <input
+                type="text"
+                autoFocus
+                value={cariTeksSiswa}
+                onChange={(e) => setCariTeksSiswa(e.target.value)}
+                placeholder="Cari materi, tugas, kuis..."
+                className="w-full bg-transparent text-sm text-[#59234F] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setSearchOpenSiswa(false)}
+                className="text-xs font-semibold text-[#8B3569] hover:text-[#59234F] px-1"
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="mt-2 max-h-56 overflow-y-auto space-y-1">
+              {NAV.filter(([, l]) => !cariTeksSiswa || l.toLowerCase().includes(cariTeksSiswa.toLowerCase().trim())).map(([k, l]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => {
+                    setNav(k);
+                    setSearchOpenSiswa(false);
+                  }}
+                  className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-semibold text-[#59234F] hover:bg-[#FFF0F6] transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <Ico k={k} className="w-4 h-4 text-[#8B3569]" />
+                    {l}
+                  </span>
+                  <span className="text-[10px] text-[#B596AA]">Buka &rarr;</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
       <div className="w-full min-w-0 flex-1 px-3 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-6">
         {nav === "beranda" && (
           <>
@@ -605,17 +838,30 @@ export default function SiswaDashboard() {
               </div>
             </section>
             <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 xl:grid-cols-5">
-              {stats.map(([label, v], i) => (
-                <div key={label} className="flex min-h-[92px] sm:min-h-[116px] items-center gap-2.5 sm:gap-3 rounded-2xl border border-[#F5D8E7] bg-white px-3 sm:px-4 py-2.5 sm:py-3.5 shadow-[0_4px_14px_rgba(91,31,75,0.045)]">
-                  <span className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#FCE4F0] text-[#B52D78]">
-                    <Ico k={["materi","tugas","kuis","nilai","pengumuman"][i]} className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="line-clamp-2 text-[11px] sm:text-xs font-semibold leading-snug text-[#81506F]">{label}</p>
-                    <p className="mt-0.5 sm:mt-1 text-xl sm:text-2xl lg:text-3xl font-extrabold leading-none text-[#59234F]">{v}</p>
-                  </div>
-                </div>
-              ))}
+              {stats.map(([label, v], i) => {
+                const navKey = ["materi", "tugas", "kuis", "nilai", "pengumuman"][i];
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setNav(navKey)}
+                    className="flex text-left min-h-[92px] sm:min-h-[116px] items-center justify-between gap-2.5 sm:gap-3 rounded-2xl border border-[#F5D8E7] bg-white px-3 sm:px-4 py-2.5 sm:py-3.5 shadow-[0_4px_14px_rgba(91,31,75,0.045)] hover:-translate-y-1 hover:border-[#D95A91]/50 hover:shadow-[0_12px_28px_rgba(91,31,75,0.1)] active:scale-[0.98] transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <span className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#FCE4F0] text-[#B52D78] group-hover:scale-110 group-hover:bg-[#FAD0E4] transition-transform">
+                        <Ico k={navKey} className="h-5 w-5 sm:h-6 sm:w-6" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-[11px] sm:text-xs font-semibold leading-snug text-[#81506F]">{label}</p>
+                        <p className="mt-0.5 sm:mt-1 text-xl sm:text-2xl lg:text-3xl font-extrabold leading-none text-[#59234F]">{v}</p>
+                        <p className="text-[10px] text-[#B596AA] mt-1 group-hover:text-[#D94383] transition-colors font-medium flex items-center gap-0.5">
+                          Buka {navKey} &rarr;
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
             <section className="overflow-hidden rounded-[24px] border border-[#F5D8E7] bg-white shadow-[0_6px_22px_rgba(91,31,75,0.05)]">
               <div className="flex items-center gap-3 px-4 py-4 sm:px-5">

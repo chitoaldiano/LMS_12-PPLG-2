@@ -47,15 +47,56 @@ export function Kosong({ text }: { text: string }) {
   return <p className="px-6 py-10 text-sm text-[#B596AA] text-center">{text}</p>;
 }
 
-export function StatCard({ label, value, icon = "beranda" }: { label: string; value: ReactNode; icon?: string }) {
+export function StatCard({
+  label,
+  value,
+  icon = "beranda",
+  onClick,
+}: {
+  label: string;
+  value: ReactNode;
+  icon?: string;
+  onClick?: () => void;
+}) {
+  const isClickable = !!onClick;
   return (
-    <div className="flex min-h-[92px] sm:min-h-[116px] items-center gap-2.5 sm:gap-3 rounded-2xl border border-[#F5D8E7] bg-white px-3 sm:px-4 py-2.5 sm:py-4 shadow-[0_4px_14px_rgba(91,31,75,0.045)]">
-      <span className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#FCE4F0] text-[#B52D78]">
-        <Ico k={icon} className="h-5 w-5 sm:h-6 sm:w-6" />
-      </span>
-      <div className="min-w-0">
-        <p className="line-clamp-2 text-[11px] sm:text-xs font-semibold leading-snug text-[#81506F]">{label}</p>
-        <p className="mt-0.5 sm:mt-1 text-xl sm:text-2xl lg:text-3xl font-extrabold leading-none text-[#59234F]">{value}</p>
+    <div
+      onClick={onClick}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={
+        isClickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      className={`group flex min-h-[92px] sm:min-h-[116px] items-center justify-between gap-2.5 sm:gap-3 rounded-2xl border border-[#F5D8E7] bg-white px-3 sm:px-4 py-2.5 sm:py-4 shadow-[0_4px_14px_rgba(91,31,75,0.045)] transition-all ${
+        isClickable
+          ? "cursor-pointer hover:-translate-y-1 hover:border-[#D95A91]/50 hover:shadow-[0_12px_28px_rgba(91,31,75,0.1)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#D94383]"
+          : ""
+      }`}
+    >
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <span
+          className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#FCE4F0] text-[#B52D78] transition-transform ${
+            isClickable ? "group-hover:scale-110 group-hover:bg-[#FAD0E4]" : ""
+          }`}
+        >
+          <Ico k={icon} className="h-5 w-5 sm:h-6 sm:w-6" />
+        </span>
+        <div className="min-w-0">
+          <p className="line-clamp-2 text-[11px] sm:text-xs font-semibold leading-snug text-[#81506F]">{label}</p>
+          <p className="mt-0.5 sm:mt-1 text-xl sm:text-2xl lg:text-3xl font-extrabold leading-none text-[#59234F]">{value}</p>
+          {isClickable && (
+            <p className="text-[10px] text-[#B596AA] mt-1 group-hover:text-[#D94383] transition-colors flex items-center gap-1 font-medium">
+              Buka {label} &rarr;
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -112,6 +153,8 @@ export default function DashboardShell({
   const [nav, setNav] = useState<string>(items[0][0]);
   const [showNotif, setShowNotif] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const s = localStorage.getItem("lms_user");
@@ -245,13 +288,95 @@ export default function DashboardShell({
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="hidden sm:flex items-center gap-3 bg-white/90 border border-[#EEDCE7] rounded-full px-4 py-2.5 w-full max-w-[410px] shadow-[0_3px_15px_rgba(91,31,75,0.04)]">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#6B2858]" fill="none" stroke="currentColor" strokeWidth="2">
+            {/* Desktop Search Bar */}
+            <div className="relative hidden sm:block w-full max-w-[360px] lg:max-w-[420px]">
+              <div className="flex items-center gap-2.5 bg-white border border-[#EEDCE7] rounded-full px-3.5 py-2 shadow-[0_3px_15px_rgba(91,31,75,0.04)] focus-within:ring-2 focus-within:ring-[#D94383] focus-within:border-transparent transition">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-4-4" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearchOpen(true);
+                  }}
+                  onFocus={() => setSearchOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const allNavs = [...items, ["profil", "Profil"] as [string, string]];
+                      const match = allNavs.find(([, l]) => l.toLowerCase().includes(searchQuery.toLowerCase().trim()));
+                      if (match) {
+                        setNav(match[0]);
+                        setSearchOpen(false);
+                        setSearchQuery("");
+                      }
+                    } else if (e.key === "Escape") {
+                      setSearchOpen(false);
+                    }
+                  }}
+                  placeholder="Cari fitur atau menu..."
+                  className="w-full bg-transparent text-sm text-[#59234F] placeholder:text-[#A78A9D] outline-none"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSearchOpen(false);
+                    }}
+                    className="text-[#A78A9D] hover:text-[#59234F] text-xs font-bold p-0.5"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Dropdown Quick Nav */}
+              {searchOpen && (
+                <div className="absolute left-0 mt-2 w-full bg-white rounded-2xl border border-[#F0DCE8] shadow-xl z-50 overflow-hidden py-1">
+                  <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-[#F0DCE8]">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#B596AA]">
+                      {searchQuery ? "Hasil Pencarian Fitur" : "Pintasan Menu"}
+                    </p>
+                    <button onClick={() => setSearchOpen(false)} className="text-[10px] text-[#A78A9D] hover:text-[#59234F]">Tutup</button>
+                  </div>
+                  {[...items, ["profil", "Profil Saya"] as [string, string]]
+                    .filter(([, label]) => !searchQuery || label.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+                    .map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setNav(key);
+                          setSearchOpen(false);
+                          setSearchQuery("");
+                        }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2 text-left text-xs font-semibold text-[#59234F] hover:bg-[#FFF0F6] transition"
+                      >
+                        <span className="p-1.5 rounded-lg bg-[#FCE4F0] text-[#B52D78]">
+                          <Ico k={key} className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="flex-1">{label}</span>
+                        <span className="text-[10px] text-[#B596AA]">Buka &rarr;</span>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Search Toggle */}
+            <button
+              onClick={() => setSearchOpen((v) => !v)}
+              className="sm:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#F0DCE8] bg-white text-[#59234F] hover:bg-[#FFF0F6] transition shadow-xs"
+              aria-label="Cari Fitur"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858]" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-4-4" />
               </svg>
-              <span className="text-sm text-[#A78A9D]">Cari fitur atau informasi...</span>
-            </div>
+            </button>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
@@ -297,6 +422,52 @@ export default function DashboardShell({
             </button>
           </div>
         </header>
+
+        {/* Mobile Search Overlay */}
+        {searchOpen && (
+          <div className="sm:hidden px-3 py-2.5 bg-white border-b border-[#F0DCE8] shadow-md z-20">
+            <div className="flex items-center gap-2 bg-[#FFF7FB] border border-[#EEDCE7] rounded-xl px-3 py-2">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari fitur..."
+                className="w-full bg-transparent text-sm text-[#59234F] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setSearchOpen(false)}
+                className="text-xs font-semibold text-[#81506F] hover:text-[#59234F] px-1"
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+              {[...items, ["profil", "Profil Saya"] as [string, string]]
+                .filter(([, label]) => !searchQuery || label.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+                .map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      setNav(key);
+                      setSearchOpen(false);
+                      setSearchQuery("");
+                    }}
+                    className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-semibold text-[#59234F] hover:bg-[#FFF0F6] transition"
+                  >
+                    <span>{label}</span>
+                    <span className="text-[10px] text-[#B596AA]">Buka &rarr;</span>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
 
         <div className="w-full min-w-0 flex-1 px-3 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-6">
           {render({ user, nav, setNav, setUser })}

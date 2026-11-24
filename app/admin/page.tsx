@@ -274,6 +274,24 @@ export default function AdminDashboard() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSemuaAktivitas, setShowSemuaAktivitas] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpenAdmin, setSearchOpenAdmin] = useState(false);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace("#", "").toLowerCase();
+      if (hash === "daftar-user" || hash === "guru") setActiveNav("guru");
+      else if (hash === "siswa") setActiveNav("siswa");
+      else if (hash === "kelas") setActiveNav("kelas");
+      else if (hash === "mapel") setActiveNav("mapel");
+      else if (hash === "pengumuman") setActiveNav("pengumuman");
+      else if (hash === "user") setActiveNav("user");
+      else if (hash === "laporan") setActiveNav("laporan");
+      else if (hash === "peraturan") setActiveNav("peraturan");
+    };
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem("lms_user");
@@ -875,7 +893,17 @@ export default function AdminDashboard() {
               </svg>
             </button>
             <span className="font-bold text-sm text-[#542044] truncate">Panel Administrator</span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSearchOpenAdmin(!searchOpenAdmin)}
+                className="w-9 h-9 rounded-xl border border-[#F0DCE8] bg-white text-[#542044] hover:bg-[#FFF0F6] flex items-center justify-center transition"
+                aria-label="Cari"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858]" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
+                </svg>
+              </button>
               <ThemeToggle className="w-9 h-9 sm:w-9 sm:h-9" />
               <button
                 onClick={handleLogout}
@@ -894,11 +922,157 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle className="w-10 h-10 sm:w-10 sm:h-10" />
-              <div className="hidden sm:flex items-center gap-3 bg-white border border-[#EEDCE7] rounded-full px-4 py-2.5 w-full max-w-[300px] shadow-[0_3px_15px_rgba(91,31,75,0.04)]">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
-                </svg>
-                <span className="text-sm text-[#A78A9D]">Cari fitur atau informasi...</span>
+
+              {/* Desktop Search Bar */}
+              <div className="relative hidden sm:block w-full max-w-[320px] lg:max-w-[380px]">
+                <div className="flex items-center gap-2.5 bg-white border border-[#EEDCE7] rounded-full px-3.5 py-2 shadow-[0_3px_15px_rgba(91,31,75,0.04)] focus-within:ring-2 focus-within:ring-[#D94383] focus-within:border-transparent transition">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
+                  </svg>
+                  <input
+                    type="text"
+                    value={cariTeks}
+                    onChange={(e) => {
+                      setCariTeks(e.target.value);
+                      setSearchOpenAdmin(true);
+                    }}
+                    onFocus={() => setSearchOpenAdmin(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const q = cariTeks.toLowerCase().trim();
+                        if (!q) return;
+                        const matchedNav = NAV_ITEMS.find((n) => n.label.toLowerCase().includes(q) || n.key.toLowerCase().includes(q));
+                        if (matchedNav) {
+                          setActiveNav(matchedNav.key);
+                          setSearchOpenAdmin(false);
+                        } else if (daftarGuruTampil.length > 0) {
+                          setActiveNav("guru");
+                          setSearchOpenAdmin(false);
+                        } else if (daftarSiswaTampil.length > 0) {
+                          setActiveNav("siswa");
+                          setSearchOpenAdmin(false);
+                        } else if (kelasListTampil.length > 0) {
+                          setActiveNav("kelas");
+                          setSearchOpenAdmin(false);
+                        } else if (mapelListTampil.length > 0) {
+                          setActiveNav("mapel");
+                          setSearchOpenAdmin(false);
+                        }
+                      } else if (e.key === "Escape") {
+                        setSearchOpenAdmin(false);
+                      }
+                    }}
+                    placeholder="Cari fitur (guru, siswa, kelas)..."
+                    className="w-full bg-transparent text-sm text-[#542044] placeholder:text-[#A78A9D] outline-none"
+                  />
+                  {cariTeks && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCariTeks("");
+                        setSearchOpenAdmin(false);
+                      }}
+                      className="text-[#A78A9D] hover:text-[#542044] text-xs font-bold p-0.5"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown Hasil Pencarian & Pintasan Fitur */}
+                {searchOpenAdmin && (
+                  <div className="absolute left-0 mt-2 w-full bg-white rounded-2xl border border-[#F0DDE8] shadow-2xl z-50 overflow-hidden py-1 max-h-[380px] overflow-y-auto">
+                    <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-[#F0DDE8] bg-[#FFF9FC]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#B99EAF]">
+                        {cariTeks ? `Hasil untuk "${cariTeks}"` : "Pintasan Fitur Cepat"}
+                      </p>
+                      <button onClick={() => setSearchOpenAdmin(false)} className="text-[10px] text-[#A78A9D] hover:text-[#542044]">
+                        Tutup
+                      </button>
+                    </div>
+
+                    <div className="p-1">
+                      {NAV_ITEMS.filter((n) => !cariTeks || n.label.toLowerCase().includes(cariTeks.toLowerCase().trim()) || n.key.toLowerCase().includes(cariTeks.toLowerCase().trim())).map((item) => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => {
+                            setActiveNav(item.key);
+                            setSearchOpenAdmin(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-xs font-semibold transition ${
+                            activeNav === item.key ? "bg-[#FCEAF2] text-[#8B3569]" : "text-[#542044] hover:bg-[#FFF0F6]"
+                          }`}
+                        >
+                          <span className="p-1 rounded-lg bg-[#F9E6F0] text-[#8B3569]">
+                            <item.icon className="w-4 h-4" />
+                          </span>
+                          <span className="flex-1">Buka Menu {item.label}</span>
+                          <span className="text-[10px] text-[#B99EAF]">Buka &rarr;</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {cariTeks.trim() && (
+                      <div className="border-t border-[#F0DDE8] p-1 bg-[#FAFAFA]">
+                        {daftarGuruTampil.length > 0 && (
+                          <div className="mb-1">
+                            <p className="px-3 py-1 text-[10px] font-bold text-[#8A7182]">Guru ({daftarGuruTampil.length})</p>
+                            {daftarGuruTampil.slice(0, 2).map((g) => (
+                              <button
+                                key={g._id}
+                                onClick={() => {
+                                  setActiveNav("guru");
+                                  setSearchOpenAdmin(false);
+                                }}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-[#FFF0F6] flex justify-between"
+                              >
+                                <span className="font-semibold text-[#542044]">{g.nama}</span>
+                                <span className="text-[10px] text-[#B99EAF]">{g.mataPelajaran?.join(", ") || "Guru"}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {daftarSiswaTampil.length > 0 && (
+                          <div className="mb-1">
+                            <p className="px-3 py-1 text-[10px] font-bold text-[#8A7182]">Siswa ({daftarSiswaTampil.length})</p>
+                            {daftarSiswaTampil.slice(0, 2).map((s) => (
+                              <button
+                                key={s._id}
+                                onClick={() => {
+                                  setActiveNav("siswa");
+                                  setSearchOpenAdmin(false);
+                                }}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-[#FFF0F6] flex justify-between"
+                              >
+                                <span className="font-semibold text-[#542044]">{s.nama}</span>
+                                <span className="text-[10px] text-[#B99EAF]">{s.kelas || "-"}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {kelasListTampil.length > 0 && (
+                          <div className="mb-1">
+                            <p className="px-3 py-1 text-[10px] font-bold text-[#8A7182]">Kelas ({kelasListTampil.length})</p>
+                            {kelasListTampil.slice(0, 2).map((k) => (
+                              <button
+                                key={k._id}
+                                onClick={() => {
+                                  setActiveNav("kelas");
+                                  setSearchOpenAdmin(false);
+                                }}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-[#FFF0F6] flex justify-between"
+                              >
+                                <span className="font-semibold text-[#542044]">{k.namaKelas}</span>
+                                <span className="text-[10px] text-[#B99EAF]">{k.jurusan}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="relative">
                 <button
@@ -955,6 +1129,51 @@ export default function AdminDashboard() {
             </div>
           </div>
         </header>
+
+        {/* Mobile Search Overlay */}
+        {searchOpenAdmin && (
+          <div className="md:hidden px-3 py-2.5 bg-white border-b border-[#F0DDE8] shadow-md z-20">
+            <div className="flex items-center gap-2 bg-[#FFF7FB] border border-[#EEDCE7] rounded-xl px-3 py-2">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#6B2858] shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
+              </svg>
+              <input
+                type="text"
+                autoFocus
+                value={cariTeks}
+                onChange={(e) => setCariTeks(e.target.value)}
+                placeholder="Cari fitur (guru, siswa, kelas)..."
+                className="w-full bg-transparent text-sm text-[#542044] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setSearchOpenAdmin(false)}
+                className="text-xs font-semibold text-[#8B3569] hover:text-[#542044] px-1"
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="mt-2 max-h-56 overflow-y-auto space-y-1">
+              {NAV_ITEMS.filter((n) => !cariTeks || n.label.toLowerCase().includes(cariTeks.toLowerCase().trim()) || n.key.toLowerCase().includes(cariTeks.toLowerCase().trim())).map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    setActiveNav(item.key);
+                    setSearchOpenAdmin(false);
+                  }}
+                  className="w-full flex items-center justify-between p-2 rounded-lg text-xs font-semibold text-[#542044] hover:bg-[#FFF0F6] transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <item.icon className="w-4 h-4 text-[#8B3569]" />
+                    {item.label}
+                  </span>
+                  <span className="text-[10px] text-[#B99EAF]">Buka &rarr;</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Scrollable content area */}
         <div className="flex-1 px-3 sm:px-6 xl:px-8 pt-5">
@@ -1062,10 +1281,10 @@ export default function AdminDashboard() {
 
             {/* Statistik */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3 mb-5">
-              <StatCard label="Total Guru" value={jumlahPerRole.guru} icon={Icon.guru}/>
-              <StatCard label="Total Siswa" value={jumlahPerRole.siswa} icon={Icon.siswa}/>
-              <StatCard label="Total Kelas" value={kelasList.length} icon={Icon.kelas}/>
-              <StatCard label="Total Mapel" value={mapelList.length} icon={Icon.mapel}/>
+              <StatCard label="Total Guru" value={jumlahPerRole.guru} icon={Icon.guru} onClick={() => setActiveNav("guru")} />
+              <StatCard label="Total Siswa" value={jumlahPerRole.siswa} icon={Icon.siswa} onClick={() => setActiveNav("siswa")} />
+              <StatCard label="Total Kelas" value={kelasList.length} icon={Icon.kelas} onClick={() => setActiveNav("kelas")} />
+              <StatCard label="Total Mapel" value={mapelList.length} icon={Icon.mapel} onClick={() => setActiveNav("mapel")} />
             </div>
 
             {/* Distribusi pengguna */}
@@ -1088,14 +1307,36 @@ export default function AdminDashboard() {
                         <span className="text-[11px] text-[#8A7182]">Total User</span>
                       </div>
                     </div>
-                    <div className="space-y-3 min-w-[125px]">
-                      {distribusi.map((d) => (
-                        <div key={d.label} className="flex items-center gap-2 text-sm">
-                          <span className="w-3 h-3 rounded-full shrink-0" style={{background:d.color}}/>
-                          <span className="text-[#70415F] flex-1">{d.label}</span>
-                          <span className="font-semibold text-[#542044] tabular-nums">{Math.round(d.value/totalSemuaRole*100)}%</span>
-                        </div>
-                      ))}
+                    <div className="space-y-1.5 min-w-[150px]">
+                      {distribusi.map((d) => {
+                        const targetNav =
+                          d.label.toLowerCase() === "guru"
+                            ? "guru"
+                            : d.label.toLowerCase() === "siswa"
+                            ? "siswa"
+                            : "user";
+                        return (
+                          <button
+                            key={d.label}
+                            type="button"
+                            onClick={() => {
+                              setActiveNav(targetNav);
+                              if (targetNav === "user") {
+                                const roleKey = d.label.toLowerCase();
+                                if (["admin", "kepsek", "kurikulum"].includes(roleKey)) {
+                                  setUserTab(roleKey);
+                                }
+                              }
+                            }}
+                            className="w-full flex items-center gap-2 text-sm px-2.5 py-1.5 rounded-xl hover:bg-[#FFF0F6] transition cursor-pointer text-left group"
+                          >
+                            <span className="w-3 h-3 rounded-full shrink-0 group-hover:scale-125 transition-transform" style={{ background: d.color }} />
+                            <span className="text-[#70415F] flex-1 font-medium group-hover:text-[#542044]">{d.label}</span>
+                            <span className="font-semibold text-[#542044] tabular-nums mr-1">{Math.round(d.value / totalSemuaRole * 100)}%</span>
+                            <span className="text-[10px] text-[#D95A91] opacity-0 group-hover:opacity-100 transition-opacity font-semibold">Buka →</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1168,8 +1409,8 @@ export default function AdminDashboard() {
           <SectionCard title="Daftar Guru" tambahHref="/admin/guru/tambah" tambahLabel="+ Tambah Guru">
             {isLoading ? (
               <SkeletonTable />
-            ) : daftarGuru.length === 0 ? (
-              <Placeholder text='Belum ada guru. Klik "+ Tambah Guru" untuk mulai.' />
+            ) : daftarGuruTampil.length === 0 ? (
+              <Placeholder text={cariTeks ? `Tidak ada guru yang cocok dengan "${cariTeks}".` : 'Belum ada guru. Klik "+ Tambah Guru" untuk mulai.'} />
             ) : (
               <div className="w-full overflow-x-auto"><table className="w-full min-w-[720px] text-sm">
                 <thead>
@@ -1182,8 +1423,8 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {daftarGuru.map((u) => (
-                    <tr key={u._id} className="border-b border-[#F8EDF3] last:border-0">
+                  {daftarGuruTampil.map((u) => (
+                    <tr key={u._id} className="border-b border-[#F8EDF3] last:border-0 hover:bg-[#FFF9FC] transition">
                       <td className="px-6 py-3.5 text-[#4C3447] font-medium">{u.nama}</td>
                       <td className="px-6 py-3.5 text-[#8A7182]">{u.email || "-"}</td>
                       <td className="px-6 py-3.5 text-[#8A7182]">{u.nip || "-"}</td>
@@ -1211,8 +1452,8 @@ export default function AdminDashboard() {
           <SectionCard title="Daftar Siswa" tambahHref="/admin/siswa/tambah" tambahLabel="+ Tambah Siswa">
             {isLoading ? (
               <SkeletonTable />
-            ) : daftarSiswa.length === 0 ? (
-              <Placeholder text='Belum ada siswa. Klik "+ Tambah Siswa" untuk mulai.' />
+            ) : daftarSiswaTampil.length === 0 ? (
+              <Placeholder text={cariTeks ? `Tidak ada siswa yang cocok dengan "${cariTeks}".` : 'Belum ada siswa. Klik "+ Tambah Siswa" untuk mulai.'} />
             ) : (
               <div className="w-full overflow-x-auto"><table className="w-full min-w-[720px] text-sm">
                 <thead>
@@ -1226,8 +1467,8 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {daftarSiswa.map((u) => (
-                    <tr key={u._id} className="border-b border-[#F8EDF3] last:border-0">
+                  {daftarSiswaTampil.map((u) => (
+                    <tr key={u._id} className="border-b border-[#F8EDF3] last:border-0 hover:bg-[#FFF9FC] transition">
                       <td className="px-6 py-3.5 text-[#4C3447] font-medium">{u.nama}</td>
                       <td className="px-6 py-3.5 text-[#8A7182]">{u.nis || "-"}</td>
                       <td className="px-6 py-3.5 text-[#8A7182]">{u.nisn || "-"}</td>
@@ -1256,8 +1497,8 @@ export default function AdminDashboard() {
           <SectionCard title="Kelola Kelas" tambahHref="/admin/kelas/tambah" tambahLabel="+ Tambah Kelas">
             {isLoadingKelas ? (
               <SkeletonTable />
-            ) : kelasList.length === 0 ? (
-              <Placeholder text='Belum ada kelas. Klik "+ Tambah Kelas" untuk mulai.' />
+            ) : kelasListTampil.length === 0 ? (
+              <Placeholder text={cariTeks ? `Tidak ada kelas yang cocok dengan "${cariTeks}".` : 'Belum ada kelas. Klik "+ Tambah Kelas" untuk mulai.'} />
             ) : (
               <div className="w-full overflow-x-auto"><table className="w-full min-w-[720px] text-sm">
                 <thead>
@@ -1271,13 +1512,13 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {kelasList.map((k) => {
+                  {kelasListTampil.map((k) => {
                     const namaWali =
                       typeof k.waliKelas === "object" && k.waliKelas !== null
                         ? (k.waliKelas as WaliKelasPopulated).nama
                         : "-";
                     return (
-                      <tr key={k._id} className="border-b border-[#F8EDF3] last:border-0">
+                      <tr key={k._id} className="border-b border-[#F8EDF3] last:border-0 hover:bg-[#FFF9FC] transition">
                         <td className="px-6 py-3.5 text-[#4C3447] font-medium">{k.namaKelas}</td>
                         <td className="px-6 py-3.5 text-[#8A7182]">{k.tingkat}</td>
                         <td className="px-6 py-3.5 text-[#8A7182]">{k.jurusan}</td>
@@ -1392,8 +1633,8 @@ export default function AdminDashboard() {
 
             {isLoading ? (
               <SkeletonTable />
-            ) : daftarUserLain.length === 0 ? (
-              <Placeholder text="Belum ada pengguna di kategori ini." />
+            ) : daftarUserLainTampil.length === 0 ? (
+              <Placeholder text={cariTeks ? `Tidak ada user yang cocok dengan "${cariTeks}".` : "Belum ada pengguna di kategori ini."} />
             ) : (
               <div className="w-full overflow-x-auto"><table className="w-full min-w-[720px] text-sm">
                 <thead>
@@ -1405,8 +1646,8 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {daftarUserLain.map((u) => (
-                    <tr key={u._id} className="border-b border-[#F8EDF3] last:border-0">
+                  {daftarUserLainTampil.map((u) => (
+                    <tr key={u._id} className="border-b border-[#F8EDF3] last:border-0 hover:bg-[#FFF9FC] transition">
                       <td className="px-6 py-3.5 text-[#4C3447] font-medium">{u.nama}</td>
                       <td className="px-6 py-3.5 text-[#8A7182]">{u.username || u.nip || u.email || "-"}</td>
                       <td className="px-6 py-3.5">
@@ -1447,8 +1688,8 @@ export default function AdminDashboard() {
 
             {isLoadingMapel ? (
               <SkeletonTable />
-            ) : mapelList.length === 0 ? (
-              <Placeholder text='Belum ada mata pelajaran. Klik "+ Tambah Mata Pelajaran" untuk mulai.' />
+            ) : mapelListTampil.length === 0 ? (
+              <Placeholder text={cariTeks ? `Tidak ada mata pelajaran yang cocok dengan "${cariTeks}".` : 'Belum ada mata pelajaran. Klik "+ Tambah Mata Pelajaran" untuk mulai.'} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
@@ -1463,10 +1704,10 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {mapelList.map((m) => {
+                    {mapelListTampil.map((m) => {
                       const pengampu = guruPengampu(m.nama);
                       return (
-                        <tr key={m._id} className="border-b border-[#F8EDF3] last:border-0">
+                        <tr key={m._id} className="border-b border-[#F8EDF3] last:border-0 hover:bg-[#FFF9FC] transition">
                           <td className="px-6 py-3.5 text-[#8A7182]">{m.kode || "-"}</td>
                           <td className="px-6 py-3.5 text-[#4C3447] font-medium">{m.nama}</td>
                           <td className="px-6 py-3.5">
@@ -1502,10 +1743,58 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ===== PLACEHOLDER: Laporan, Peraturan ===== */}
-        {["laporan", "peraturan"].includes(activeNav) && (
-          <div className="bg-white rounded-2xl border border-[#F0DDE8] px-6 py-16 text-center shadow-sm">
-            <p className="text-sm text-[#B99EAF]">Fitur ini belum tersedia.</p>
+        {/* ===== LAPORAN ===== */}
+        {activeNav === "laporan" && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-[#F0DDE8] p-5 lg:p-6 shadow-[0_6px_24px_rgba(91,31,75,0.045)]">
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-[#F9E6F0] text-[#8B3569] flex items-center justify-center">
+                  <Icon.laporan className="w-5 h-5" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-bold text-[#542044]">Laporan & Rekapitulasi Akademik</h2>
+                  <p className="text-xs text-[#70415F] mt-0.5">Pantau data rekapitulasi nilai sekolah dan pembagian pengajar per kelas secara terpadu.</p>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-6">
+              <GuruPerKelas />
+              <RekapNilai bolehUnduh />
+            </div>
+          </div>
+        )}
+
+        {/* ===== PERATURAN ===== */}
+        {activeNav === "peraturan" && (
+          <div className="bg-white rounded-2xl border border-[#F0DDE8] p-6 lg:p-8 shadow-[0_6px_24px_rgba(91,31,75,0.045)]">
+            <div className="border-b border-[#F0DDE8] pb-4 mb-6">
+              <h2 className="text-xl font-bold text-[#542044]">Tata Tertib & Peraturan LMS SMK Citra Negara</h2>
+              <p className="text-sm text-[#70415F] mt-1">Pedoman dan tata cara pelaksanaan pembelajaran daring, evaluasi tugas, dan kuis online.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="p-5 rounded-2xl border border-[#F5D8E7] bg-[#FFF9FC]">
+                <h3 className="font-bold text-[#70295F] text-sm mb-3 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#D94383]" /> Tata Tertib Guru Pengampu
+                </h3>
+                <ul className="text-xs text-[#59234F] space-y-2 list-disc list-inside leading-relaxed">
+                  <li>Mengunggah materi pembelajaran dan modul sesuai dengan silabus kurikulum.</li>
+                  <li>Memberikan tenggat waktu tugas yang wajar dan jelas bagi seluruh siswa.</li>
+                  <li>Memeriksa jawaban tugas dan menginput nilai secara berkala dan transparan.</li>
+                  <li>Menjaga kerahasiaan soal kuis dan akun akses pendidik.</li>
+                </ul>
+              </div>
+              <div className="p-5 rounded-2xl border border-[#F5D8E7] bg-[#FFF9FC]">
+                <h3 className="font-bold text-[#70295F] text-sm mb-3 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#D94383]" /> Tata Tertib Siswa
+                </h3>
+                <ul className="text-xs text-[#59234F] space-y-2 list-disc list-inside leading-relaxed">
+                  <li>Mengikuti kegiatan pembelajaran dan mengunduh materi tepat waktu.</li>
+                  <li>Mengumpulkan tugas sebelum batas deadline yang telah ditentukan.</li>
+                  <li>Mengerjakan kuis daring secara mandiri, jujur, dan tidak berbuat curang.</li>
+                  <li>Menjaga etika, kesopanan, dan kerahasiaan akun login NISN masing-masing.</li>
+                </ul>
+              </div>
+            </div>
           </div>
         )}
         </div>
@@ -2082,19 +2371,47 @@ function StatCard({
   label,
   value,
   icon: IconComp,
+  onClick,
 }: {
   label: string;
   value: number | string;
   icon: (props: SvgIconProps) => ReactNode;
+  onClick?: () => void;
 }) {
+  const isClickable = !!onClick;
   return (
-    <div className="group bg-white rounded-[20px] border border-[#F0DDE8] px-4 lg:px-5 py-4 flex items-center justify-between gap-3 shadow-[0_5px_20px_rgba(91,31,75,0.045)] hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(91,31,75,0.09)] transition-all">
+    <div
+      onClick={onClick}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={
+        isClickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      className={`group bg-white rounded-[20px] border border-[#F0DDE8] px-4 lg:px-5 py-4 flex items-center justify-between gap-3 shadow-[0_5px_20px_rgba(91,31,75,0.045)] transition-all ${
+        isClickable
+          ? "cursor-pointer hover:-translate-y-1 hover:border-[#D95A91]/50 hover:shadow-[0_12px_28px_rgba(91,31,75,0.12)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#D94383]"
+          : "hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(91,31,75,0.09)]"
+      }`}
+    >
       <div className="min-w-0">
-        <p className="text-[11px] lg:text-xs font-medium text-[#8A7182]">{label}</p>
+        <p className="text-[11px] lg:text-xs font-semibold text-[#8A7182]">{label}</p>
         <p className="text-2xl lg:text-[30px] leading-tight font-extrabold text-[#5B1F4B] mt-1 tabular-nums">{value}</p>
-        <p className="text-[10px] text-[#B99EAF] mt-1">Data terdaftar</p>
+        <p className="text-[10px] text-[#B99EAF] mt-1 font-medium group-hover:text-[#D95A91] transition-colors flex items-center gap-1">
+          {isClickable ? `Buka data ${label.replace("Total ", "")} →` : "Data terdaftar"}
+        </p>
       </div>
-      <div className="w-12 h-12 lg:w-[66px] lg:h-[66px] rounded-full bg-[#FBEAF2] flex items-center justify-center text-[#8B3569] shrink-0 group-hover:bg-[#F5D5E5] transition">
+      <div
+        className={`w-12 h-12 lg:w-[66px] lg:h-[66px] rounded-full bg-[#FBEAF2] flex items-center justify-center text-[#8B3569] shrink-0 transition-transform ${
+          isClickable ? "group-hover:scale-110 group-hover:bg-[#F5D5E5]" : "group-hover:bg-[#F5D5E5]"
+        }`}
+      >
         <IconComp className="w-6 h-6 lg:w-7 lg:h-7" />
       </div>
     </div>
